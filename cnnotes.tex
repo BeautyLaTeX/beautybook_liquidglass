@@ -1,4 +1,5 @@
-\documentclass[lang=cn,12pt,a4paper,fontset=none]{beautybook}
+% !TeX program = xelatex
+\documentclass[lang=cn,12pt,fontset=none,a4paper]{beautybook}
 % ---------------------------------------------------------------------------- %
 %                            The Cover Theme Chosen                            %
 % ---------------------------------------------------------------------------- %
@@ -9,25 +10,42 @@
 \definecolor{nuanbai}{HTML}{f5f5f5}
 \pagecolor{nuanbai}
 \beautybookstyle={
-   cover-choose=enfig, % en/cn/enfig/birkar
-   math-font=plain, % plain/mtpro2/fourier
-   sidebar=off, % on/off
+   cover-choose=cn, % en/cn/enfig/birkar/stargate
+   math-font=plain, % plain/mtpro2/fourier/stix (xelatex only!!)
+   sidebar=on, % on/off
 }
 \usepackage{stys/beautybook-cnsettings} % 中文配置文件
+\usepackage{stys/beautybook-liquidglass} % LiquidGlass content materials
+\BeautyGlassDefault[lg radius={3mm, northwest=5pt}]
 % ---------------------------------------------------------------------------- %
 %                            The Cover Theme Chosen                            %
 % ---------------------------------------------------------------------------- %
-\usepackage{newtxmath}
+\usepackage{nicematrix}
+% Chapter images follow chapter parity; each list cycles independently.
+\makeatletter
+\titleimage{
+   chapteroddimage={c9,c10},
+   %
+   partoddimage={c9,c10},
+   %
+   chapterevenimage={c9,c10},
+   %
+   partevenimage={c9,c10},
+}
+\chapimage{\beautybook@chapterimagename} % 会自动改变
+\partimage{\beautybook@partimagename}    % 会自动改变
+\makeatother
+
 \begin{document}
 \thispagestyle{empty}
 \title{Notes for Articles}
 \subtitle{}
-\edition{First Edition}
+\edition{Second Edition}
 \bookseries{Research Notes}
 \author{Ethan Lu}
 \pressname{beautybook}
 \presslogo{beautybook-logo}
-\coverimage{hummingbird-8013214}
+\coverimage{stargate}
 \makecover
 
 \makeatletter
@@ -48,17 +66,6 @@
 % ---------------------------------------------------------------------------- %
 %                         The images used in the title                         %
 % ---------------------------------------------------------------------------- %
-\titleimage{
-  chapteroddimage={c9,c10},
-%
-  partoddimage={c9,c10},
-%
-  chapterevenimage={c9,c10},
-%
-  partevenimage={c9,c10},
-}
-\chapimage{\beautybook@chapterimagename} % 会自动改变
-\partimage{\beautybook@partimagename}    % 会自动改变
 \makeatother
 % ---------------------------------------------------------------------------- %
 %                         The images used in the title                         %
@@ -77,18 +84,18 @@
 \pagenumbering{Roman}
 
 {% Preface
-\thispagestyle{empty}
-% \addcontentsline{toc}{chapter}{Preface}
-\chapter*{Preface}
-Here is a comprehensive list of the academic papers that I have perused.
-
-
-\hfill
-\begin{tabular}{lr}
-    &-- Ethan Lu\\ 
-    &2024-07-12
-\end{tabular}
-\clearpage}
+   \thispagestyle{empty}
+   % \addcontentsline{toc}{chapter}{Preface}
+   \chapter*{Preface}
+   Here is a comprehensive list of the academic papers that I have perused.
+   
+   
+   \hfill
+   \begin{tabular}{lr}
+       & -- Ethan Lu \\
+       & 2024-07-12
+   \end{tabular}
+   \clearpage}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \thispagestyle{empty}
@@ -103,7 +110,7 @@ Here is a comprehensive list of the academic papers that I have perused.
 \chapter{笔记归档}
 \section{杂记}
 \subsection{一些重要概念的理解}
-   在环论中，理想（ideal）是指一个环的子集，它在环的加法和乘法下保持封闭性。具体来说，如果 $I$ 是一个环 $R$ 的理想，那么 $I$ 满足以下条件：
+在环论中，理想（ideal）是指一个环的子集，它在环的加法和乘法下保持封闭性。具体来说，如果 $I$ 是一个环 $R$ 的理想，那么 $I$ 满足以下条件：
 
 1. 对于所有 $a, b \in I$，有 $a + b \in I$。
 
@@ -138,52 +145,52 @@ Here is a comprehensive list of the academic papers that I have perused.
 
 一个函数 \(\psi\) 具有neat analytic singularities的定义是：对于流形 \(M\) 上的每一个点 \(x \in M\)，存在一个邻域 \(U\)，使得在这个邻域上，\(\psi\) 可以表示为：
 \[
-\psi = c \log \left( \sum_{j=1}^N |g_j|^2 \right) + u,
+   \psi = c \log \left( \sum_{j=1}^N |g_j|^2 \right) + u,
 \]
 其中：
 \begin{itemize}
-  \item \(c > 0\) 是一个常数，
-  \item \(g_j \in \mathcal{O}_M(U)\) 是在 \(U\) 上定义的全纯函数，
-  \item \(u \in C^\infty(U)\) 是在 \(U\) 上的光滑函数。
+   \item \(c > 0\) 是一个常数，
+   \item \(g_j \in \mathcal{O}_M(U)\) 是在 \(U\) 上定义的全纯函数，
+   \item \(u \in C^\infty(U)\) 是在 \(U\) 上的光滑函数。
 \end{itemize}
 
 \textbf{分析集合 \( S = \{ \psi = -\infty \} \)}
 
 为了理解 \( S \) 的性质，我们首先考虑 \(\psi\) 取值为负无穷的条件。在一个局部邻域 \(U\) 内，我们有
 \[
-\psi = c \log \left( \sum_{j=1}^N |g_j|^2 \right) + u.
+   \psi = c \log \left( \sum_{j=1}^N |g_j|^2 \right) + u.
 \]
 为了使 \(\psi = -\infty\)，我们需要
 \[
-c \log \left( \sum_{j=1}^N |g_j|^2 \right) \to -\infty.
+   c \log \left( \sum_{j=1}^N |g_j|^2 \right) \to -\infty.
 \]
 由于 \(c > 0\)，这等价于
 \[
-\log \left( \sum_{j=1}^N |g_j|^2 \right) \to -\infty,
+   \log \left( \sum_{j=1}^N |g_j|^2 \right) \to -\infty,
 \]
 即
 \[
-\sum_{j=1}^N |g_j|^2 \to 0.
+   \sum_{j=1}^N |g_j|^2 \to 0.
 \]
 所以，\(\psi = -\infty\) 的点是满足 \( \sum_{j=1}^N |g_j|^2 = 0 \) 的点集。
 
 \textbf{解析子流形}
 
 \[
-S = \{ \psi = -\infty \} = \left\{ \sum_{j=1}^N |g_j|^2 = 0 \right\}.
+   S = \{ \psi = -\infty \} = \left\{ \sum_{j=1}^N |g_j|^2 = 0 \right\}.
 \]
 注意到 \(\sum_{j=1}^N |g_j|^2 = 0\) 当且仅当每个 \(g_j\) 都为零，因为每个 \(|g_j|\) 是非负的实数。于是，
 \[
-S = \{ g_1 = 0, g_2 = 0, \ldots, g_N = 0 \}.
+   S = \{ g_1 = 0, g_2 = 0, \ldots, g_N = 0 \}.
 \]
 在一个邻域 \(U\) 上，\(\{g_j = 0\}\) 是全纯函数 \(g_j\) 的零点集。因为这些 \(g_j\) 是全纯函数，它们的零点集形成了一个解析子流形。也就是说，\(\{g_1 = 0, g_2 = 0, \ldots, g_N = 0\}\) 是 \(M\) 的一个解析子流形。
 
 
-因此，我们得出，具有neat analytic singularities的函数 \(\psi\) 的集合 \( S = \{ \psi = -\infty \} \) 是流形 \(M\) 的一个解析子流形。这是因为在每个邻域 \(U\) 上，\(\psi\) 可以表示为一个常数 \(c\) 乘以对全纯函数平方和的对数加上一个光滑函数，而 \(\psi = -\infty\) 的点集正好是这些全纯函数的零点集的交集，构成了一个解析子流形。
+因此，我们得出，具有 {\rodondo neat analytic singularities} 的函数 \(\psi\) 的集合 \( S = \{ \psi = -\infty \} \) 是流形 \(M\) 的一个解析子流形。这是因为在每个邻域 \(U\) 上，\(\psi\) 可以表示为一个常数 \(c\) 乘以对全纯函数平方和的对数加上一个光滑函数，而 \(\psi = -\infty\) 的点集正好是这些全纯函数的零点集的交集，构成了一个解析子流形。
 
 \subsection{Normal Bundle and Its Duality}
 
-在微分几何和代数几何中，法丛（normal bundle）和其对偶丛（dual bundle）是重要的概念。下面将详细解释它们的定义及如何理解这些概念。
+在微分几何和代数几何中，法丛（{\mont normal bundle}）和其对偶丛（{\cabin dual bundle}）是重要的概念。下面将详细解释它们的定义及如何理解这些概念。
 
 \textbf{法丛（Normal Bundle）}
 
@@ -198,7 +205,7 @@ S = \{ g_1 = 0, g_2 = 0, \ldots, g_N = 0 \}.
 
 定义: 法丛 \( \mathcal{N}_X \) 是 \( X \) 在 \( M \) 中的法向量（normal vectors）的集合，形式上表示为：
 \[
-\mathcal{N}_X = \frac{TM|_X}{TX}.
+   \mathcal{N}_X = \frac{TM|_X}{TX}.
 \]
 这里，\( TM|_X \) 表示限制在 \( X \) 上的 \( M \) 的切丛，而 \( TX \) 是 \( X \) 的切丛。法丛 \( \mathcal{N}_X \) 可以被看作是 \( TM \) 的一个子丛，其每个纤维是 \( TM \) 的纤维减去 \( TX \) 的纤维。
 
@@ -212,16 +219,16 @@ S = \{ g_1 = 0, g_2 = 0, \ldots, g_N = 0 \}.
 
 定义: 法丛 \( \mathcal{N}_X \) 的对偶丛 \( \mathcal{N}_X^* \) 是一个向量丛，其每个纤维是 \( \mathcal{N}_{X,x} \) 的对偶向量空间：
 \[
-\mathcal{N}_X^* = (\mathcal{N}_X)^*.
+   \mathcal{N}_X^* = (\mathcal{N}_X)^*.
 \]
 
 \textbf{具体例子}
 
 考虑 \( X \) 是嵌入在 \( \mathbb{R}^3 \) 中的一个二维曲面。此时：
 \begin{enumerate}
-  \item \( TX \) 是曲面的切丛，每个纤维是曲面在该点的切空间。
-  \item \( \mathcal{N}_X \) 是曲面的法丛，每个纤维是垂直于曲面切空间的向量，这就是曲面在每点的法向量。
-  \item \( \mathcal{N}_X^* \) 是法丛的对偶丛，每个纤维是从法向量空间到实数的线性函数集合。
+   \item \( TX \) 是曲面的切丛，每个纤维是曲面在该点的切空间。
+   \item \( \mathcal{N}_X \) 是曲面的法丛，每个纤维是垂直于曲面切空间的向量，这就是曲面在每点的法向量。
+   \item \( \mathcal{N}_X^* \) 是法丛的对偶丛，每个纤维是从法向量空间到实数的线性函数集合。
 \end{enumerate}
 
 \textbf{直观理解:}在每一点 \( x \in X \)，\( \mathcal{N}_X^* \) 的纤维 \( \mathcal{N}_{X,x}^* \) 是所有线性函数从 \( \mathcal{N}_{X,x} \) 到 \( \mathbb{R} \) 的集合。如果 \( \mathcal{N}_X \) 表示法向量，则 \( \mathcal{N}_X^* \) 表示与这些法向量相对的线性形式。
@@ -230,9 +237,9 @@ S = \{ g_1 = 0, g_2 = 0, \ldots, g_N = 0 \}.
 
 考虑 \( X \) 是嵌入在 \( \mathbb{R}^3 \) 中的一个二维曲面。此时：
 \begin{enumerate}
-  \item \( TX \) 是曲面的切丛，每个纤维是曲面在该点的切空间。
-  \item \( \mathcal{N}_X \) 是曲面的法丛，每个纤维是垂直于曲面切空间的向量，这就是曲面在每点的法向量。
-  \item \( \mathcal{N}_X^* \) 是法丛的对偶丛，每个纤维是从法向量空间到实数的线性函数集合。
+   \item \( TX \) 是曲面的切丛，每个纤维是曲面在该点的切空间。
+   \item \( \mathcal{N}_X \) 是曲面的法丛，每个纤维是垂直于曲面切空间的向量，这就是曲面在每点的法向量。
+   \item \( \mathcal{N}_X^* \) 是法丛的对偶丛，每个纤维是从法向量空间到实数的线性函数集合。
 \end{enumerate}
 
 总而言之，法丛 \( \mathcal{N}_X \)：描述子流形在嵌入空间中的法向量，表示为 \( \mathcal{N}_X = \frac{TM|_X}{TX} \)；
@@ -247,17 +254,17 @@ S = \{ g_1 = 0, g_2 = 0, \ldots, g_N = 0 \}.
 
 首先，我们要明确一些概念：
 \begin{enumerate}
-  \item 光滑射影簇：这是一个复流形，嵌入到某个复射影空间中，是复代数几何中的基本对象。
-  \item Kähler度量：这是一个特殊的度量，使得流形具有Kähler结构，即其Kähler形式 \( \omega \) 是闭的（即 \( d\omega = 0 \)）。
-  \item 弱拟凸Kähler流形：这是一个Kähler流形，存在一个拟凸的Kähler形式。
+   \item 光滑射影簇：这是一个复流形，嵌入到某个复射影空间中，是复代数几何中的基本对象。
+   \item Kähler度量：这是一个特殊的度量，使得流形具有Kähler结构，即其Kähler形式 \( \omega \) 是闭的（即 \( d\omega = 0 \)）。
+   \item 弱拟凸Kähler流形：这是一个Kähler流形，存在一个拟凸的Kähler形式。
 \end{enumerate}
 
 对于光滑射影簇 \( X \)，它具有固定的Kähler度量 \(\omega\)。关键是要证明它是否为弱拟凸Kähler流形。
 \textbf{这里指出所有光滑射影簇都是弱拟凸Kähler流形。}具体来说，可以通过以下几点来理解：
 \begin{enumerate}
-  \item 紧致性：光滑射影簇是紧致的。
-  \item Kähler结构：光滑射影簇天然带有Kähler结构。
-  \item 弱拟凸性：由于射影簇是紧致的，任何Kähler度量都将满足弱拟凸的条件。
+   \item 紧致性：光滑射影簇是紧致的。
+   \item Kähler结构：光滑射影簇天然带有Kähler结构。
+   \item 弱拟凸性：由于射影簇是紧致的，任何Kähler度量都将满足弱拟凸的条件。
 \end{enumerate}
 
 
@@ -268,66 +275,70 @@ S = \{ g_1 = 0, g_2 = 0, \ldots, g_N = 0 \}.
 猜想下面定理成立
 \begin{theorem}[][Main Theorem][thm:question]
    On a weakly pseudoconvex $n$-dimensional Kähler manifold $(X, \omega)$, let $L$ be a smooth Hermitian holomorphic line bundle, $E$ a smooth Hermitian holomorphic vector bundle of rank $r \geq 1$, and $s \in H^0(X, E)$ a section transverse to the zero section. Set
-$$
-Y:=\{x \in X: s(x)=0\} .
-$$
-
-Assume also that, for an integer $k \geq 0$, the $(1,1)$-form $\sqrt{-1} \Theta_L+(r+k) \sqrt{-1} \partial \bar{\partial} \log |s|_E^2$ involving the curvature of $L$ is semipositive on $X \backslash Y$, and that there exists a continuous function $\alpha>0$ on $X$ such that on $X \backslash Y$,
-\begin{enumerate}[label=(\roman*)]
-  \item $\sqrt{-1} \Theta_L+(r+k) \sqrt{-1} \partial \bar{\partial} \log |s|^2 \geq \alpha^{-1} \frac{\left\{\sqrt{-1} \Theta_E s, s\right\}}{|s|^2}$,
-  \item $|s|_E \leq e^{-\alpha}$.
-\end{enumerate}
-Then for every relatively compact open subset $\Omega \subset X$ and every $k$-jet $f \in H^0\left(X, K_X \otimes L^{\otimes m}\otimes \mathscr{O}_X / \mathscr{I}_Y^{k+1}\right)$ satisfying
-$$
-\int_Y \frac{|f|_{s, \rho,(k)}^2}{\left|\Lambda^r(\mathrm{~d} s)\right|^2} \mathrm{~d} V_{Y, \omega}<+\infty,
-$$
-there exists $F^{(k)} \in H^0\left(\Omega, K_X \otimes L^{\otimes m}\right)$ such that $J_{\Omega}^k F^{(k)}=f$ and
-$$
-\int_{\Omega} \frac{\left|F^{(k)}\right|_L^2}{|s|^{2 r} \left(-\log |s|\right)^2} \mathrm{d} V_{X, \omega} \leq C_{r}^{(k)} \int_Y \frac{|f|_{s, \rho,(k)}^2}{\left|\Lambda^r(\mathrm{~d} s)\right|^2} \mathrm{~d} V_{Y, \omega},
-$$
-where $C_{r}^{(k)}>0$ is a constant depending only on $r, k, E$ and $\sup _{\Omega}\|i \Theta(L)\|$.
+   $$
+      Y:=\{x \in X: s(x)=0\} .
+   $$
+   
+   Assume also that, for an integer $k \geq 0$, the $(1,1)$-form $\sqrt{-1} \Theta_L+(r+k) \sqrt{-1} \partial \bar{\partial} \log |s|_E^2$ involving the curvature of $L$ is semipositive on $X \backslash Y$, and that there exists a continuous function $\alpha>0$ on $X$ such that on $X \backslash Y$,
+   \begin{enumerate}[label=(\roman*)]
+      \item $\sqrt{-1} \Theta_L+(r+k) \sqrt{-1} \partial \bar{\partial} \log |s|^2 \geq \alpha^{-1} \frac{\left\{\sqrt{-1} \Theta_E s, s\right\}}{|s|^2}$,
+      \item $|s|_E \leq e^{-\alpha}$.
+   \end{enumerate}
+   Then for every relatively compact open subset $\Omega \subset X$ and every $k$-jet $f \in H^0\left(X, K_X \otimes L^{\otimes m}\otimes \mathscr{O}_X / \mathscr{I}_Y^{k+1}\right)$ satisfying
+   $$
+      \int_Y \frac{|f|_{s, \rho,(k)}^2}{\left|\Lambda^r(\mathrm{~d} s)\right|^2} \mathrm{~d} V_{Y, \omega}<+\infty,
+   $$
+   there exists $F^{(k)} \in H^0\left(\Omega, K_X \otimes L^{\otimes m}\right)$ such that $J_{\Omega}^k F^{(k)}=f$ and
+   $$
+      \int_{\Omega} \frac{\left|F^{(k)}\right|_L^2}{|s|^{2 r} \left(-\log |s|\right)^2} \mathrm{d} V_{X, \omega} \leq C_{r}^{(k)} \int_Y \frac{|f|_{s, \rho,(k)}^2}{\left|\Lambda^r(\mathrm{~d} s)\right|^2} \mathrm{~d} V_{Y, \omega},
+   $$
+   where $C_{r}^{(k)}>0$ is a constant depending only on $r, k, E$ and $\sup _{\Omega}\|i \Theta(L)\|$.
 \end{theorem}
 \begin{proof}[基本思路]
-  主要关注点在于需要更改哪里
+   主要关注点在于需要更改哪里
 \end{proof}
 
 将主定理中的$K_X\otimes L$改为$K_X\otimes L^{\otimes l}$是可以的，但需要确保所有的证明和条件都相应调整。具体来说，$L^{\otimes l}$表示$L$的$l$次张量积，以下是需要考虑的几点：
 
 1. Hermitian Metric和Curvature：
-   - $L$的Hermitian度量会影响其$l$次张量积$L^{\otimes l}$的度量。
-   - 对于$L^{\otimes l}$的曲率$\Theta(L^{\otimes l})$，我们有$\Theta(L^{\otimes l}) = l\Theta(L)$，其中$\Theta(L)$是$L$的曲率形式。因此，定理中的条件需要相应调整以考虑这个变化。
+\begin{itemize}
+   \item $L$的Hermitian度量会影响其$l$次张量积$L^{\otimes l}$的度量;
+   \item 对于$L^{\otimes l}$的曲率$\Theta(L^{\otimes l})$，我们有$\Theta(L^{\otimes l}) = l\Theta(L)$，其中$\Theta(L)$是$L$的曲率形式。因此，定理中的条件需要相应调整以考虑这个变化。
+\end{itemize}
 
 2. 主要定理中的条件调整：
-   - 定理0.1.4中条件(a)：
-     $$ i\Theta(L) + (r + k) id'd'' \log |s|^2 \geq α^{-1} \{i\Theta(E)s, s\}/|s|^2 $$
-     需要改为：
-     $$ i\Theta(L^{\otimes l}) + (r + k) id'd'' \log |s|^2 \geq α^{-1} \{i\Theta(E)s, s\}/|s|^2 $$
-     即：
-     $$ li\Theta(L) + (r + k) id'd'' \log |s|^2 \geq α^{-1} \{i\Theta(E)s, s\}/|s|^2 $$
-   - 定理中的其他条件也需要相应调整以适应$L^{\otimes l}$。
+\begin{itemize}
+   \item 定理0.1.4中条件(a)：
+         $$ i\Theta(L) + (r + k) id'd'' \log |s|^2 \geq \alpha^{-1} \{i\Theta(E)s, s\}/|s|^2 $$
+         需要改为：
+         $$ i\Theta(L^{\otimes l}) + (r + k) id'd'' \log |s|^2 \geq \alpha^{-1} \{i\Theta(E)s, s\}/|s|^2 $$
+         即：
+         $$ li\Theta(L) + (r + k) id'd'' \log |s|^2 \geq \alpha^{-1} \{i\Theta(E)s, s\}/|s|^2 $$
+   \item 定理中的其他条件也需要相应调整以适应$L^{\otimes l}$。
+\end{itemize}
 
-3. 证明中的调整：
-   - 证明中的所有涉及$L$的部分需要替换为$L^{\otimes l}$，并且重新计算相关的L2估计和Sobolev范数。
+
+3. 证明中的调整：证明中的所有涉及$L$的部分需要替换为$L^{\otimes l}$，并且重新计算相关的L2估计和Sobolev范数。
 
 具体来说，调整后的定理可以表述如下：
 
 调整后的主定理
 令 $X$ 是一个复数维度为 $n$ 的弱伪凸复流形，配有一个Kähler度量 $\omega$。设 $L$ 是一个Hermitian全纯线丛，$E$ 是一个秩为 $r$ 的Hermitian全纯向量丛，并且 $s \in H^0(X, E)$ 是一个截面，假设其在零截面上是一般横截的。定义：
 $$ Y := \{x \in X \mid s(x) = 0, \Lambda^r(ds)(x) \neq 0\} $$
-这是 $X$ 中的一个余维度为 $r$ 的子流形。假设对于某个整数 $k \geq 0$，(1,1)-形式 $i\Theta(L^{\otimes l}) + (r+k) id'd'' \log |s|^2$ 是半正的，并且存在一个连续函数 $α \geq 1$ 使得在 $X$ 上满足以下两个不等式：
+这是 $X$ 中的一个余维度为 $r$ 的子流形。假设对于某个整数 $k \geq 0$，(1,1)-形式 $i\Theta(L^{\otimes l}) + (r+k) id'd'' \log |s|^2$ 是半正的，并且存在一个连续函数 $\alpha \geq 1$ 使得在 $X$ 上满足以下两个不等式：
 
-(a) \(i\Theta(L^{\otimes l}) + (r+k) id'd'' \log |s|^2 \geq α^{-1} \{i\Theta(E)s, s\}/|s|^2\),
+(a) \(i\Theta(L^{\otimes l}) + (r+k) id'd'' \log |s|^2 \geq \alpha^{-1} \{i\Theta(E)s, s\}/|s|^2\),
 
-(b) \(|s| \leq e^{-α}\).
+(b) \(|s| \leq e^{-\alpha}\).
 
 如果 $\Omega \subset X$ 是一个相对紧的开子集，定义一个相关的权函数 \(\rho = \rho_\Omega > 0\) 为：
 $$ \rho(y) = \frac{1}{||D s^{-1}_y|| \sup_{\xi \in \Omega} (||D^2 s_\xi|| + ||D s_\xi||)}, $$
 其中 $D$ 表示 $E$ 的Chern联络。
 
 那么，对于每个相对开的子集 $\Omega \subset X$，以及每个 $k$ 阶喷射 $f \in H^0(X, \Lambda^n T^* X \otimes L^{\otimes l} \otimes O_X / I^{k+1}_Y)$，如果
-$$ \int_Y |f|^2_{s, \rho, (k)} |Λ^r(ds)|^{-2} dV_Y, \omega < +∞, $$
+$$ \int_Y |f|^2_{s, \rho, (k)} |\Lambda^r(ds)|^{-2} dV_Y, \omega < +\infty, $$
 则存在 \(F_k \in H^0(X, \Lambda^n T^* X \otimes L^{\otimes l})\)，使得 \(J_k F_k = f\)，并且
-$$ \int_\Omega \frac{|F_k|^2}{|s|^{2r} (-\log |s|)^2} dV_X, \omega \leq C(k)_r \int_Y |f|^2_{s, \rho, (k)} |Λ^r(ds)|^{-2} dV_Y, \omega, $$
+$$ \int_\Omega \frac{|F_k|^2}{|s|^{2r} (-\log |s|)^2} dV_X, \omega \leq C(k)_r \int_Y |f|^2_{s, \rho, (k)} |\Lambda^r(ds)|^{-2} dV_Y, \omega, $$
 其中 \(C(k)_r > 0\) 是仅依赖于 $r$、$k$、$E$ 和 $\sup_\Omega ||i\Theta(L^{\otimes l})||$ 的常数。
 
 通过这些调整，我们可以将原定理应用于$K_X\otimes L^{\otimes l}$的情况。希望这些信息对你有帮助，如果有更多具体问题或需要更详细的调整，请告诉我。
@@ -337,32 +348,44 @@ $$ \int_\Omega \frac{|F_k|^2}{|s|^{2r} (-\log |s|)^2} dV_X, \omega \leq C(k)_r \
 
 1. Hermitian度量和曲率
 \begin{itemize}
-  \item Hermitian度量：$L^{\otimes l}$ 的度量来自 $L$ 的度量。如果 $h_L$ 是 $L$ 的 Hermitian 度量，那么 $L^{\otimes l}$ 的度量是 $h_L^{\otimes l}$，其曲率 $\Theta(L^{\otimes l}) = l\Theta(L)$。需要检查原证明中的每一步，确保使用 $\Theta(L^{\otimes l})$ 时能够自然过渡。
-  \item 曲率条件：在原定理中，假设 $i\Theta(L) + (r + k) id'd'' \log |s|^2 \geq α^{-1} \{i\Theta(E)s, s\}/|s|^2$。替换后，需要确认 $li\Theta(L) + (r + k) id'd'' \log |s|^2 \geq α^{-1} \{i\Theta(E)s, s\}/|s|^2$ 仍然成立，并且可能需要调整 $α$ 以满足新的不等式。
+   \item Hermitian度量：$L^{\otimes l}$ 的度量来自 $L$ 的度量。如果 $h_L$ 是 $L$ 的 Hermitian 度量，那么 $L^{\otimes l}$ 的度量是 $h_L^{\otimes l}$，其曲率 $\Theta(L^{\otimes l}) = l\Theta(L)$。需要检查原证明中的每一步，确保使用 $\Theta(L^{\otimes l})$ 时能够自然过渡。
+   \item 曲率条件：在原定理中，假设 $i\Theta(L) + (r + k) id'd'' \log |s|^2 \geq \alpha^{-1} \{i\Theta(E)s, s\}/|s|^2$。替换后，需要确认 $li\Theta(L) + (r + k) id'd'' \log |s|^2 \geq \alpha^{-1} \{i\Theta(E)s, s\}/|s|^2$ 仍然成立，并且可能需要调整 $\alpha$ 以满足新的不等式。
 \end{itemize}
 
 2. Sobolev范数和L2估计
 
-   - L2估计：原文中使用的 L2 估计可能依赖于 $L$ 的具体性质，特别是度量 $h_L$。推广到 $L^{\otimes l}$ 时，需要重新计算这些估计，并确保 $L^{\otimes l}$ 的度量 $h_L^{\otimes l}$ 带来的变化不会破坏证明的有效性。
-   
-   - Sobolev范数：原文中定义的 Sobolev 范数可能需要重新定义，以适应 $L^{\otimes l}$。尤其是在涉及到 jets 的部分，需要确认新的 Sobolev 范数能够正确估计 $L^{\otimes l}$ 的 jets。
+\begin{itemize}
+   \item L2估计：原文中使用的 L2 估计可能依赖于 $L$ 的具体性质，特别是度量 $h_L$。推广到 $L^{\otimes l}$ 时，需要重新计算这些估计，并确保 $L^{\otimes l}$ 的度量 $h_L^{\otimes l}$ 带来的变化不会破坏证明的有效性。
+         
+   \item Sobolev范数：原文中定义的 Sobolev 范数可能需要重新定义，以适应 $L^{\otimes l}$。尤其是在涉及到 jets 的部分，需要确认新的 Sobolev 范数能够正确估计 $L^{\otimes l}$ 的 jets。
+\end{itemize}
+
 
 3. 证明的技术细节
 
-   - L2 Extension Theorem：原文中的证明基于 Ohsawa-Takegoshi 的 L2 extension theorem 和 Manivel 的推广。需要确保这些定理在 $L^{\otimes l}$ 上仍然适用。如果有额外条件，需要进一步验证。
-   
-   - Rauch Comparison Theorem：证明中使用的 Rauch 比较定理也需要重新检查，确保它在 $L^{\otimes l}$ 的情况下依然成立。
+\begin{itemize}
+   \item L2 Extension Theorem：原文中的证明基于 Ohsawa-Takegoshi 的 L2 extension theorem 和 Manivel 的推广。需要确保这些定理在 $L^{\otimes l}$ 上仍然适用。如果有额外条件，需要进一步验证。
+         
+   \item Rauch Comparison Theorem：证明中使用的 Rauch 比较定理也需要重新检查，确保它在 $L^{\otimes l}$ 的情况下依然成立。
+\end{itemize}
+
 
 4. 整体框架和逻辑
 
-   - 证明逻辑：整个证明过程需要重新梳理，确保每一步都能推广到 $L^{\otimes l}$。特别是涉及到度量和曲率的部分，需要逐一验证。
-   
-   - 统一常数和估计：原文中的统一常数和估计需要重新计算，并确保它们在新的情况下仍然适用。这包括所有涉及到 $L$ 的部分，例如 $α$ 的定义和估计等。
+\begin{itemize}
+   \item 证明逻辑：整个证明过程需要重新梳理，确保每一步都能推广到 $L^{\otimes l}$。特别是涉及到度量和曲率的部分，需要逐一验证。
+         
+   \item 统一常数和估计：原文中的统一常数和估计需要重新计算，并确保它们在新的情况下仍然适用。这包括所有涉及到 $L$ 的部分，例如 $\alpha$ 的定义和估计等。
+\end{itemize}
+
 
 5. 额外难点
-   - 范数和估计：你已经提到涉及到 $L$ 的范数及相关估计是一个难点。这是一个关键问题，需要细致地重新计算并验证。
-   
-   - 其他潜在问题：任何涉及到具体几何性质的部分，例如喷射 (jets) 的定义和性质，可能需要重新验证。在推广过程中，需要特别关注这些细节，确保所有几何和分析性质在新的设置下仍然成立。
+\begin{itemize}
+   \item 范数和估计：你已经提到涉及到 $L$ 的范数及相关估计是一个难点。这是一个关键问题，需要细致地重新计算并验证。
+         
+   \item 其他潜在问题：任何涉及到具体几何性质的部分，例如喷射 (jets) 的定义和性质，可能需要重新验证。在推广过程中，需要特别关注这些细节，确保所有几何和分析性质在新的设置下仍然成立。
+\end{itemize}
+
 
 
 要将主定理推广到 $K_X \otimes L^{\otimes l}$，需要仔细处理涉及到度量和曲率的技术细节，重新计算相关的 L2 估计和 Sobolev 范数，并验证所有证明步骤在新的设置下的有效性。原文的证明经过适当修改是有可能继续使用的，但需要逐步验证和调整每一个细节。
@@ -373,31 +396,31 @@ $$ \int_\Omega \frac{|F_k|^2}{|s|^{2r} (-\log |s|)^2} dV_X, \omega \leq C(k)_r \
 在原文中，$L$ 的 Sobolev 范数和 $L^2$ 估计在以下部分有所涉及：
 
 1. Sobolev 范数的定义和使用：
-   - 在原文中，定义了 $k$ 阶 jet 的 Sobolev 型 $L^2$ 范数。这涉及到如何为 $L$ 定义合适的内在 Sobolev 范数。具体来说，定义了加权的 $L^2$ 范数，其中包含了 Hermitian 向量丛 $L$ 的范数【12:0†source】。
-   - 这些范数被用于度量 $f \in H^0(X, \Lambda^n T^*X \otimes L \otimes \mathcal{O}_X / I^{k+1}_Y)$ 的点态范数和整体的 $L^2$ 范数。例如，文中定义了在权函数 $\rho > 0$ 下的点态 $\rho$ 加权范数和整体 $L^2$ 加权范数【12:2†source】【12:3†source】。
+- 在原文中，定义了 $k$ 阶 jet 的 Sobolev 型 $L^2$ 范数。这涉及到如何为 $L$ 定义合适的内在 Sobolev 范数。具体来说，定义了加权的 $L^2$ 范数，其中包含了 Hermitian 向量丛 $L$ 的范数【12:0†source】。
+- 这些范数被用于度量 $f \in H^0(X, \Lambda^n T^*X \otimes L \otimes \mathcal{O}_X / I^{k+1}_Y)$ 的点态范数和整体的 $L^2$ 范数。例如，文中定义了在权函数 $\rho > 0$ 下的点态 $\rho$ 加权范数和整体 $L^2$ 加权范数【12:2†source】【12:3†source】。
 
 2. $L^2$ 估计的使用：
-   - $L^2$ 估计主要用于推导 $k$ 阶 jet 的估计。这包括使用 Parseval's 公式和 Garding 引理来控制解的导数的增长。具体而言，这些估计用于证明在椭圆系统中的解的增长情况【12:1†source】【12:5†source】。
-   - 文中还涉及了如何使用 $L^2$ 范数来得到关于 jet 延拓的积分不等式，这些不等式在推广过程中可能需要重新验证【12:4†source】。
+- $L^2$ 估计主要用于推导 $k$ 阶 jet 的估计。这包括使用 Parseval's 公式和 Garding 引理来控制解的导数的增长。具体而言，这些估计用于证明在椭圆系统中的解的增长情况【12:1†source】【12:5†source】。
+- 文中还涉及了如何使用 $L^2$ 范数来得到关于 jet 延拓的积分不等式，这些不等式在推广过程中可能需要重新验证【12:4†source】。
 
 需要解决的问题和修改
 
 为了将主定理中的 $K_X \otimes L$ 改为 $K_X \otimes L^{\otimes l}$（其中 $L^{\otimes l}$ 表示 $L$ 的 $l$ 次张量积），需要解决以下问题：
 
 1. Sobolev 范数的重新定义：
-   - 需要重新定义 $L^{\otimes l}$ 的 Sobolev 范数。这涉及到如何从 $L$ 的范数推导出 $L^{\otimes l}$ 的范数。
-   - 具体来说，需要证明在新的设定下，对应的 Sobolev 范数依然满足同样的性质和不等式。
+- 需要重新定义 $L^{\otimes l}$ 的 Sobolev 范数。这涉及到如何从 $L$ 的范数推导出 $L^{\otimes l}$ 的范数。
+- 具体来说，需要证明在新的设定下，对应的 Sobolev 范数依然满足同样的性质和不等式。
 
 2. $L^2$ 估计的调整：
-   - 原文中的 $L^2$ 估计依赖于 $L$ 的 Hermitian 范数。需要确认 $L^{\otimes l}$ 的范数是否也满足相同的估计，或者需要调整证明中的关键步骤。
-   - 需要重新验证在 $L^{\otimes l}$ 下，Parseval's 公式和 Garding 引理是否仍然适用，或者需要新的技术工具来替代它们。
+- 原文中的 $L^2$ 估计依赖于 $L$ 的 Hermitian 范数。需要确认 $L^{\otimes l}$ 的范数是否也满足相同的估计，或者需要调整证明中的关键步骤。
+- 需要重新验证在 $L^{\otimes l}$ 下，Parseval's 公式和 Garding 引理是否仍然适用，或者需要新的技术工具来替代它们。
 
 3. 曲率形式和 Chern 连接：
-   - 需要重新计算 $L^{\otimes l}$ 的曲率形式和相应的 Chern 连接。这些计算会影响到整个证明过程，特别是在计算导数和积分不等式时。
-   - 需要确认在新的设定下，导出的不等式依然有效。
+- 需要重新计算 $L^{\otimes l}$ 的曲率形式和相应的 Chern 连接。这些计算会影响到整个证明过程，特别是在计算导数和积分不等式时。
+- 需要确认在新的设定下，导出的不等式依然有效。
 
 4. 整体框架的验证：
-   - 虽然原文的方法和技术可以提供一定的指导，但需要逐步验证每一个步骤在新的设定下是否依然成立。这包括每一个局部提升、导数的计算、范数的估计等。
+- 虽然原文的方法和技术可以提供一定的指导，但需要逐步验证每一个步骤在新的设定下是否依然成立。这包括每一个局部提升、导数的计算、范数的估计等。
 
 综上所述，要完成从 $K_X \otimes L$ 到 $K_X \otimes L^{\otimes l}$ 的推广，涉及到重新定义范数、调整 $L^2$ 估计、计算新的曲率形式和 Chern 连接，并验证整体证明框架。这是一个复杂的过程，需要对每一个细节进行仔细推敲和验证。
 
@@ -410,15 +433,18 @@ $$ \int_\Omega \frac{|F_k|^2}{|s|^{2r} (-\log |s|)^2} dV_X, \omega \leq C(k)_r \
 考虑从一个流形 $M$ 到另一个流形 $N$ 的映射 $f: M \to N$。$k$ 阶喷射丛（$k$-jet bundle）$J^k(M, N)$ 包含了 $f$ 在每一点 $x \in M$ 的 $k$ 阶导数信息。更正式地说，两个映射 $f, g: M \to N$ 在点 $x \in M$ 的 $k$ 阶喷射相同，当且仅当 $f$ 和 $g$ 在 $x$ 及其附近的一定范围内具有相同的泰勒展开到 $k$ 阶。
 
 主要性质
-
-1. **局部坐标描述**：在局部坐标系中，$k$ 阶喷射可以表示为 $f$ 的各阶偏导数组成的向量。
-2. **光滑结构**：$k$ 阶喷射丛本身是一个光滑流形，并且可以构造出一个纤维丛（fiber bundle），其中纤维是与 $k$ 阶导数有关的向量空间。
-3. **应用**：喷射丛在研究偏微分方程的几何理论中非常重要。通过喷射丛，可以把微分方程的解的高阶导数转化为几何对象进行研究。
+\begin{itemize}
+   \item 局部坐标描述：在局部坐标系中，$k$ 阶喷射可以表示为 $f$ 的各阶偏导数组成的向量。
+   \item 光滑结构：$k$ 阶喷射丛本身是一个光滑流形，并且可以构造出一个纤维丛（fiber bundle），其中纤维是与 $k$ 阶导数有关的向量空间。
+   \item 应用：喷射丛在研究偏微分方程的几何理论中非常重要。通过喷射丛，可以把微分方程的解的高阶导数转化为几何对象进行研究。
+\end{itemize}
 
 具体例子
+\begin{itemize}
+   \item 1-jet bundle：当 $k=1$ 时，1-jet bundle 记录了映射的点和该点的导数。对于光滑映射 $f: \mathbb{R}^n \to \mathbb{R}^m$，1-jet bundle 记录了 $f$ 在某点的值及其雅可比矩阵（Jacobian matrix）。
+   \item 高阶 jet bundle：对于 $k > 1$，$k$-jet bundle 记录了高阶偏导数，能够捕捉更多的局部几何信息。
+\end{itemize}
 
-- **1-jet bundle**：当 $k=1$ 时，1-jet bundle 记录了映射的点和该点的导数。对于光滑映射 $f: \mathbb{R}^n \to \mathbb{R}^m$，1-jet bundle 记录了 $f$ 在某点的值及其雅可比矩阵（Jacobian matrix）。
-- **高阶 jet bundle**：对于 $k > 1$，$k$-jet bundle 记录了高阶偏导数，能够捕捉更多的局部几何信息。
 
 形式化定义
 
@@ -450,21 +476,21 @@ $$ [f]_x^k = \left( f(x), \frac{\partial f}{\partial x^i}(x), \frac{\partial^2 f
 
 喷射层的性质
 
-1. **Exact Sequences**：喷射层和其他层之间存在精确序列。例如，一阶喷射层 $J^1_{X/Y}$ 和切丛 $\mathcal{T}_X$ 之间有一个经典的精确序列：
-   $$ 0 \to \Omega^1_X \to J^1_{X/Y} \to \mathcal{O}_X \to 0, $$
-   其中 $\Omega^1_X$ 是 $X$ 上的微分形式层。
+1. Exact Sequences：喷射层和其他层之间存在精确序列。例如，一阶喷射层 $J^1_{X/Y}$ 和切丛 $\mathcal{T}_X$ 之间有一个经典的精确序列：
+$$ 0 \to \Omega^1_X \to J^1_{X/Y} \to \mathcal{O}_X \to 0, $$
+其中 $\Omega^1_X$ 是 $X$ 上的微分形式层。
 
-2. **代数结构**：喷射层具有丰富的代数结构，可以通过层的同态（sheaf morphism）和分次结构（graded structure）进行研究。
+2. 代数结构：喷射层具有丰富的代数结构，可以通过层的同态（sheaf morphism）和分次结构（graded structure）进行研究。
 
-3. **应用**：喷射层在研究代数微分方程、解析几何中的模空间（moduli space）、代数簇（algebraic varieties）的变形理论（deformation theory）中有广泛应用。
+3. 应用：喷射层在研究代数微分方程、解析几何中的模空间（moduli space）、代数簇（algebraic varieties）的变形理论（deformation theory）中有广泛应用。
 
 应用示例
 
-**模空间的研究**：在研究模空间时，喷射层提供了分析映射的高阶变形的重要工具。例如，给定一个代数簇 $X$，喷射层可以帮助理解 $X$ 的自同构（automorphism）群以及 $X$ 的变形空间。
+模空间的研究：在研究模空间时，喷射层提供了分析映射的高阶变形的重要工具。例如，给定一个代数簇 $X$，喷射层可以帮助理解 $X$ 的自同构（automorphism）群以及 $X$ 的变形空间。
 
-**代数微分方程**：喷射层在代数微分方程中起到了关键作用。通过将微分方程转化为喷射层的条件，可以使用代数几何的方法来研究这些方程的解的结构和性质。
+代数微分方程：喷射层在代数微分方程中起到了关键作用。通过将微分方程转化为喷射层的条件，可以使用代数几何的方法来研究这些方程的解的结构和性质。
 
-**解析几何中的应用**：在解析几何中，喷射层用于研究复流形上的函数和映射的局部行为，通过喷射层可以更好地理解这些映射的全局性质。
+解析几何中的应用：在解析几何中，喷射层用于研究复流形上的函数和映射的局部行为，通过喷射层可以更好地理解这些映射的全局性质。
 
 总结
 
@@ -472,7 +498,7 @@ $$ [f]_x^k = \left( f(x), \frac{\partial f}{\partial x^i}(x), \frac{\partial^2 f
 
 在复几何和代数几何中，陈联络（Chern connection）作为偏微分算子发挥了重要作用，特别是在讨论喷射丛（jet bundle）和喷射层（jet sheaf）时。让我们详细讨论一下陈联络及其在这些几何对象中的应用。
 
- 陈联络（Chern Connection）
+陈联络（Chern Connection）
 
 陈联络是一种特殊的联络，用于复向量丛（complex vector bundle）上，尤其是在赫尔墨特向量丛（Hermitian vector bundle）上。陈联络最初由陈省身引入，用于构造具有特定性质的联络，它既与丛的赫尔墨特度量（Hermitian metric）相容，又保持复结构。
 
@@ -480,16 +506,16 @@ $$ [f]_x^k = \left( f(x), \frac{\partial f}{\partial x^i}(x), \frac{\partial^2 f
 
 考虑一个复向量丛 $E$，其上有一个赫尔墨特度量 $h$。陈联络是一个唯一的联络 $\nabla$，满足以下条件：
 
-1. **Hermitian Compatibility**：对于 $E$ 的任何两个截面 $s_1, s_2$，
-   $$
+1. Hermitian Compatibility：对于 $E$ 的任何两个截面 $s_1, s_2$，
+$$
    \frac{\partial}{\partial z^i} h(s_1, s_2) = h(\nabla_{\frac{\partial}{\partial z^i}} s_1, s_2) + h(s_1, \nabla_{\frac{\partial}{\partial \overline{z}^i}} s_2),
-   $$
-   这表示陈联络与赫尔墨特度量 $h$ 相容。
+$$
+这表示陈联络与Hermite度量 $h$ 相容。
 
-2. **Complex Structure Compatibility**：陈联络的 $(0,1)$ 分量等于 Dolbeault 算子 $\overline{\partial}$，即
-   $$
+2. Complex Structure Compatibility：陈联络的 $(0,1)$ 分量等于 Dolbeault 算子 $\overline{\partial}$，即
+$$
    \nabla^{(0,1)} = \overline{\partial}.
-   $$
+$$
 应用在喷射丛和喷射层中
 
 喷射丛和喷射层包含高阶导数的信息，陈联络提供了一种自然的方式来处理这些导数信息，特别是在复杂结构和赫尔墨特度量的情况下。
@@ -497,7 +523,7 @@ $$ [f]_x^k = \left( f(x), \frac{\partial f}{\partial x^i}(x), \frac{\partial^2 f
 
 喷射丛 $J^k(E)$ 包含 $E$ 的截面及其高阶导数的信息。陈联络 $\nabla$ 可以延拓到喷射丛上，从而定义高阶喷射丛上的联络。具体来说，给定一个截面 $s \in \Gamma(E)$，陈联络 $\nabla$ 作用在 $s$ 的高阶喷射上，可以递归地定义为：
 $$
-\nabla^{k+1} s = \nabla (\nabla^k s),
+   \nabla^{k+1} s = \nabla (\nabla^k s),
 $$
 其中 $\nabla^k s$ 是 $s$ 的 $k$ 阶导数所组成的喷射。
 
@@ -525,30 +551,30 @@ $$
 % \subsection{Main Theorem}
 \begin{theorem}[][Main Theorem][thm:main]
    Let $(X, \omega)$ be a weakly pseudoconvex complex n-dimensional manifold possessing a Kähler metric $\omega, \psi$ be a plurisubharmonic function on $X$, $E$ be a holomorphic vector bundle of rank $r$ over $X$ equipped with a smooth Hermitian metric $(1 \leq r\leq n)$, and $s$ be a global holomorphic section of $E$. Assume that $s$ is transverse to the zero section, and let
-$$
-Y:=\{x \in X: s(x)=0, \Lambda^r (\dd s)(x)\neq 0\} .
-$$
-
-Let $L$ be a holomorphic line bundle over $X$ equipped with a singular Hermitian metric $h_L$, which is written locally as $e^{-\varphi_L}$ for some function $\varphi_L \in L_{\text {loc }}^1$ with respect to a local holomorphic frame of $L$. Assume that $\frac{q}{2}\varphi_L+\br{1-\frac{q}{2}}\varphi_\omega+\psi$ is quasi-plurisubharmonic and $\varphi_L$ is locally bounded above. Let $\sigma:=\psi+(r+k)\log \abs{s}^2_E$  for an integer $k\geqslant 0$  and $\Theta_L=\bd\bdd\varphi_L$ .  Moreover, assume that the $(1,1)$-form  
-
-(i) $\frac{q}{2}\sqrt{-1} \Theta_L+\br{1-\frac{q}{2}}\sqrt{-1}\bd\bdd\varphi_\omega+ \sqrt{-1} \partial \bar{\partial} \sigma \geq 0$ holds on $X \backslash Y$, 
-
-and that there is a continuous function $\alpha>0$ on $X$ such that the following two inequalities hold on $X \backslash Y$ :
-
-(ii) $\frac{q}{2}\displaystyle\sqrt{-1} \Theta_L+\br{1-\frac{q}{2}}\sqrt{-1}\bd\bdd\varphi_\omega+\sqrt{-1} \partial \bar{\partial} \sigma \geq \frac{\left\{\sqrt{-1} \Theta_E s, s\right\}_E}{\alpha|s|_E^2}$,
-
-(iii) $\sigma\leq-2 r \alpha$
-
-Then, for every relatively compact open subset $\Omega \subset X$, and every $k$-jet $f \in H^0\left(X, K_X\otimes L \otimes \mathcal{O}_X / \mathcal{J}_Y^{k+1}\right)$ satisfying
-$$
-C_f :=\int_Y \frac{|f|_{s, \rho,(k)}^2}{\left|\Lambda^r(d s)\right|^{2} }d V_{Y, \omega}<+\infty,
-$$
-there exists $F_k \in H^0\left(X, K_X \otimes L\right)$ such that $J^k F_k=f$ and
-$$
-\int_{\Omega} \frac{\left|F_k\right|_L^q}{e^\sigma R(\sigma)} d V_{X, \omega} \leq C_{r,R}^{(k)} C_f,
-$$
-where $C_{r,R}^{(k)}>0$ is a constant depending only on $r, R,k, E$, and $\sup _{\Omega}\|i \Theta_L\|$.
-
+   $$
+      Y:=\{x \in X: s(x)=0, \Lambda^r (\dd s)(x)\neq 0\} .
+   $$
+   
+   Let $L$ be a holomorphic line bundle over $X$ equipped with a singular Hermitian metric $h_L$, which is written locally as $e^{-\varphi_L}$ for some function $\varphi_L \in L_{\text {loc }}^1$ with respect to a local holomorphic frame of $L$. Assume that $\frac{q}{2}\varphi_L+\br{1-\frac{q}{2}}\varphi_\omega+\psi$ is quasi-plurisubharmonic and $\varphi_L$ is locally bounded above. Let $\sigma:=\psi+(r+k)\log \abs{s}^2_E$  for an integer $k\geqslant 0$  and $\Theta_L=\partial\bdd\varphi_L$ .  Moreover, assume that the $(1,1)$-form
+   
+   (i) $\frac{q}{2}\sqrt{-1} \Theta_L+\br{1-\frac{q}{2}}\sqrt{-1}\partial\bdd\varphi_\omega+ \sqrt{-1} \partial \bar{\partial} \sigma \geq 0$ holds on $X \backslash Y$,
+   
+   and that there is a continuous function $\alpha>0$ on $X$ such that the following two inequalities hold on $X \backslash Y$ :
+   
+   (ii) $\frac{q}{2}\displaystyle\sqrt{-1} \Theta_L+\br{1-\frac{q}{2}}\sqrt{-1}\partial\bdd\varphi_\omega+\sqrt{-1} \partial \bar{\partial} \sigma \geq \frac{\left\{\sqrt{-1} \Theta_E s, s\right\}_E}{\alpha|s|_E^2}$,
+   
+   (iii) $\sigma\leq-2 r \alpha$
+   
+   Then, for every relatively compact open subset $\Omega \subset X$, and every $k$-jet $f \in H^0\left(X, K_X\otimes L \otimes \mathcal{O}_X / \mathcal{J}_Y^{k+1}\right)$ satisfying
+   $$
+      C_f :=\int_Y \frac{|f|_{s, \rho,(k)}^2}{\left|\Lambda^r(d s)\right|^{2} }d V_{Y, \omega}<+\infty,
+   $$
+   there exists $F_k \in H^0\left(X, K_X \otimes L\right)$ such that $J^k F_k=f$ and
+   $$
+      \int_{\Omega} \frac{\left|F_k\right|_L^q}{e^\sigma R(\sigma)} d V_{X, \omega} \leq C_{r,R}^{(k)} C_f,
+   $$
+   where $C_{r,R}^{(k)}>0$ is a constant depending only on $r, R,k, E$, and $\sup _{\Omega}\|i \Theta_L\|$.
+   
 \end{theorem}
 
 
@@ -567,40 +593,40 @@ where $C_{r,R}^{(k)}>0$ is a constant depending only on $r, R,k, E$, and $\sup _
 
 
 \begin{problem}[][非零全纯函数的泰勒展开性质]
-   请问为何对于一个高维复平面上一个半径为$r$小圆盘$\Delta_r$上的非零全纯函数$f$，可以将它写作$f=z^m f_1$,这里$f_1|_o\neq 0$,？$o$是复平面的原点。
+请问为何对于一个高维复平面上一个半径为$r$小圆盘$\Delta_r$上的非零全纯函数$f$，可以将它写作$f=z^m f_1$,这里$f_1|_o\neq 0$,？$o$是复平面的原点。
 \end{problem}
 
 \begin{solution}
    对于一个高维复平面上的非零全纯函数 \( f \)，如果在一个半径为 \( r \) 的小圆盘 \( \Delta_r \) 上分析这个函数，考虑 \( f \) 在原点附近的性质，可以通过以下方式理解为何 \( f \) 可以写作 \( f = z^m f_1 \)，其中 \( f_1 \) 在原点非零：
-
-泰勒级数展开：
+   
+   泰勒级数展开：
    由于 \( f \) 是全纯函数，它在原点附近可以展开成一个泰勒级数：
    \[
-   f(z) = a_0 + a_1 z + a_2 z^2 + \cdots
+      f(z) = a_0 + a_1 z + a_2 z^2 + \cdots
    \]
    其中 \( a_i \) 是常数。
-
-找出最低次非零项：
+   
+   找出最低次非零项：
    因为 \( f \) 是非零的全纯函数，因此总有一个最小的正整数 \( m \)，使得 \( a_m \neq 0 \) 而 \( a_0, a_1, \ldots, a_{m-1} \) 都是零。也就是说，
    \[
-   f(z) = a_m z^m + a_{m+1} z^{m+1} + \cdots
+      f(z) = a_m z^m + a_{m+1} z^{m+1} + \cdots
    \]
-
-提取 \( z^m \) 因子：
+   
+   提取 \( z^m \) 因子：
    将 \( z^m \) 提出来，可以写作
    \[
-   f(z) = z^m (a_m + a_{m+1} z + a_{m+2} z^2 + \cdots)
+      f(z) = z^m (a_m + a_{m+1} z + a_{m+2} z^2 + \cdots)
    \]
    记 \( f_1(z) = a_m + a_{m+1} z + a_{m+2} z^2 + \cdots \)。因为 \( a_m \neq 0 \)，因此 \( f_1 \) 在原点处非零，即 \( f_1|_o \neq 0 \)。
-
-最终表达式：
+   
+   最终表达式：
    这样，\( f(z) \) 可以表示为
    \[
-   f(z) = z^m f_1(z)
+      f(z) = z^m f_1(z)
    \]
    其中 \( f_1 \) 是一个在 \( \Delta_r \) 上全纯的函数，并且在原点处 \( f_1 \neq 0 \)。
-
-这个表示法的关键点在于全纯函数的泰勒级数展开，保证了我们可以通过找到最低次非零项，将 \( f \) 分解为 \( z^m \) 与一个在原点非零的全纯函数 \( f_1 \) 的乘积。
+   
+   这个表示法的关键点在于全纯函数的泰勒级数展开，保证了我们可以通过找到最低次非零项，将 \( f \) 分解为 \( z^m \) 与一个在原点非零的全纯函数 \( f_1 \) 的乘积。
 \end{solution}
 
 
@@ -610,35 +636,35 @@ Weierstrass' preparation theorem is a theorem obtained and originally formulated
 
 The formulation of the Weierstrass preparation theorem for functions of $n$ complex variables, $n\geq 1$. Let
 $$
-f(z)=f(z_1,\dots,z_n)
+   f(z)=f(z_1,\dots,z_n)
 $$
 be a holomorphic function of $z=(z_1,\dots,z_n)$ in the polydisc
 $$
-U={z:|z_i|<a_i,i=1,\dots,n},
+   U={z:|z_i|<a_i,i=1,\dots,n},
 $$
 and let
 $$
-f(0)=0,  f(0,\dots,0,z_n)\not\equiv 0.
+   f(0)=0,  f(0,\dots,0,z_n)\not\equiv 0.
 $$
 Then, in some polydisc
 $$
-V=\{z:|z_i|<b_i\leq a_i, i=1,\dots,n\},
+   V=\{z:|z_i|<b_i\leq a_i, i=1,\dots,n\},
 $$
 the function $f(z)$ can be represented in the form
 $$
-f(z)= [z^s_n+f_1(z_1,\dots,z_{n-1})z^{s-1}_n+\dots
-+f_s(z_1,\dots,z_{n-1})]h(z),
+   f(z)= [z^s_n+f_1(z_1,\dots,z_{n-1})z^{s-1}_n+\dots
+   +f_s(z_1,\dots,z_{n-1})]h(z),
 $$
 where $s$ is the multiplicity of vanishing of the function
 $$
-f(z_n)=f(0,\dots,0,z_n)
+   f(z_n)=f(0,\dots,0,z_n)
 $$
 at the coordinate origin, $s\geq 1$ ; the functions $f_j(z_1,\dots,z_{n-1})$ are holomorphic in the polydisc
 $$
-\begin{gathered}
-   V'=\{(z_1,\dots,z_{n-1}):|z_i|<b_i,i=1,\dots,n-1\},\\
-f_j(0,\dots,0)=0, j=1,\dots,s;
-\end{gathered}
+   \begin{gathered}
+      V'=\{(z_1,\dots,z_{n-1}):|z_i|<b_i,i=1,\dots,n-1\},\\
+      f_j(0,\dots,0)=0, j=1,\dots,s;
+   \end{gathered}
 $$
 the function $h(z)$ is holomorphic and does not vanish in $V$. The functions $f_j(z_1,\dots,z_{n-1}), j=1,\dots,s$, and $h(z)$ are uniquely determined by the conditions of the theorem.
 
@@ -648,57 +674,57 @@ Weierstrass' preparation theorem is purely algebraic, and may be formulated for 
 ; let$ f$ be a series of this ring whose terms have lowest possible degree $s\geq 1$
 , and assume that a term of the form $c z^s_n, c≠0$, exists. The series $f$ can then be represented as
 $$
-f=(z^s_n+f_1 z^{s-1}_n+\dots+f_s)g,
+   f=(z^s_n+f_1 z^{s-1}_n+\dots+f_s)g,
 $$
 where $f_1,\dots,f_s$ are series in $C[[z_1,\dots,z_{n-1}]]$ whose constant terms are zero, and $g$ is a series in $\bC[[z_1,\dots,z_n]]$ with non-zero constant term. The formal power series $f_1,\dots,f_s$ and $g$ are uniquely determined by $f$.
 
 A meaning which is sometimes given to the theorem is the following division theorem: Let the series
 $$
-f\in \bC[[z_1,\dots,z_n]]
+   f\in \bC[[z_1,\dots,z_n]]
 $$
 satisfy the conditions just specified, and let $g$ be an arbitrary series in $\bC[[z_1,\dots,z_n]]$. Then there exists a series
 $$
-h\in \bC[[z_1,\dots,z_n]]
+   h\in \bC[[z_1,\dots,z_n]]
 $$
 and series
 $$
-\begin{gathered}
-   a_j\in \bC[[z_1,\dots,z_{n-1}]],  a_j (0,\dots,0)=0,\\
-j=0,\dots,s-1,
-\end{gathered}
+   \begin{gathered}
+      a_j\in \bC[[z_1,\dots,z_{n-1}]],  a_j (0,\dots,0)=0,\\
+      j=0,\dots,s-1,
+   \end{gathered}
 $$
 which satisfy the following equation:
 $$
-g=h_f+a_0+a_1z_n+\dots+a_{s-1}z^{s-1}_n.
+   g=h_f+a_0+a_1z_n+\dots+a_{s-1}z^{s-1}_n.
 $$
 Weierstrass' preparation theorem also applies to rings of formally bounded series. It provides a method of inductive transition, e.g. from $\bC[[z_1,\dots,z_{n-1}]]$
- to $\bC[[z_1,\dots,z_n]]$. It is possible to establish certain properties of the rings $\bC[z_1,\dots,z_n]$ and $\bC[[z_1,\dots,z_n]]$ in this way, such as being Noetherian and having the unique factorization property. There exists a generalization of this theorem to differentiable functions [6].
+to $\bC[[z_1,\dots,z_n]]$. It is possible to establish certain properties of the rings $\bC[z_1,\dots,z_n]$ and $\bC[[z_1,\dots,z_n]]$ in this way, such as being Noetherian and having the unique factorization property. There exists a generalization of this theorem to differentiable functions [6].
 
 References
 
-[1a]	K. Weierstrass, "Abhandlungen aus der Funktionenlehre" , Springer (1866)
+   [1a]	K. Weierstrass, "Abhandlungen aus der Funktionenlehre" , Springer (1866)
 
 [1b]	K. Weierstrass, "Math. Werke" , 1–7 , Mayer \& Müller (1894–1895)
 
 [2]	B.V. Shabat, "Introduction of complex analysis" , 1–2 , Moscow (1985) (In Russian) Zbl 0578.32001 Zbl 0574.30001
 
-[3]	S. Bochner, W.T. Martin, "Several complex variables" , Princeton Univ. Press (1948) MR0027863 Zbl 0041.05205
+   [3]	S. Bochner, W.T. Martin, "Several complex variables" , Princeton Univ. Press (1948) MR0027863 Zbl 0041.05205
 
-[4]	R.C. Gunning, H. Rossi, "Analytic functions of several complex variables" , Prentice-Hall (1965) MR0180696 Zbl 0141.08601
+   [4]	R.C. Gunning, H. Rossi, "Analytic functions of several complex variables" , Prentice-Hall (1965) MR0180696 Zbl 0141.08601
 
-[5]	I.R. Shafarevich, "Basic algebraic geometry" , Springer (1977) (Translated from Russian) MR0447223 Zbl 0362.14001
+   [5]	I.R. Shafarevich, "Basic algebraic geometry" , Springer (1977) (Translated from Russian) MR0447223 Zbl 0362.14001
 
-[6]	B. Malgrange, "Ideals of differentiable functions" , Tata Inst. (1966) MR2065138 MR0212575 Zbl 0177.17902
+   [6]	B. Malgrange, "Ideals of differentiable functions" , Tata Inst. (1966) MR2065138 MR0212575 Zbl 0177.17902
 
 \textbf{Comments}
 
 The polynomial
 $$
-z^s_n+f_1(z_1,\dots,z_{n-1}) z^{s-1}_n+⋯+
-+f_s(z_1,\dots,z_{n-1}),
+   z^s_n+f_1(z_1,\dots,z_{n-1}) z^{s-1}_n+⋯+
+   +f_s(z_1,\dots,z_{n-1}),
 $$
 which occurs in the Weierstrass preparation theorem, is called a Weierstrass polynomial of degree s
- in $z_n$.
+in $z_n$.
 
 % The analogue of the Weierstrass preparation theorem for differentiable functions is variously known as the differentiable preparation theorem, the Malgrange preparation theorem or the Malgrange–Mather preparation theorem. Let F
 %  be a smooth real-valued function on some neighbourhood of 0
@@ -794,56 +820,58 @@ which occurs in the Weierstrass preparation theorem, is called a Weierstrass pol
 
 下面是这两个定理的初步理解以及它们的证明。
 \begin{theorem}[][Weierstrass Preparation Theorem][thm:Weierstrass Preparation Theorem]
-   If $f$ is holomorphic around the origin in $\bC^n$ and is not identically zero on the $w$-axis, then in some neighborhood of the origin $f$ can be written as 
+   If $f$ is holomorphic around the origin in $\bC^n$ and is not identically zero on the $w$-axis, then in some neighborhood of the origin $f$ can be written as
    \[f=g\cdot h,\]
    where $g$ is a Weierstrass polynomial of degree $d$ in $w$ and $h(0)\neq 0$.
-
+   
    即每个 $f \in \mathcal{O}_{\mathbb{C}^n, 0}$ 都能唯一地写为 $f=g \cdot h$的形式, 其中 $g$ 是一个 WP 而 $h$ 是一个单位元素（即可逆的元素, 或者等价地 $h(0) \neq 0$ ）。
 \end{theorem}
-   \begin{proof}
-% We assert that the key point of the proof is the progress of constructing the weierstrass polynomial $g(z,w)$. Suppose we are given a function $f(z_1,\dots$ $,z_{n-1},w)$ holomorphic in some neighborhood of the origin in $\bC^n$, with $f(0,\dots,0)=0$. Assume that $f$ does not vanish identically on the $w$-axis, i.e., the power series expansion for $f$ around the origin contains a term $a\cdot w^d$ with $a\neq 0$ and $d\geq 1$; clearly this will be the case for most choices of coordinate system.
-
-
-% 当然，照着书上抄一遍证明并没有什么意思，也挺麻烦，所以我就简单把思路过一遍。
-首先这种存在唯一的定理大概都可以想想这个``唯一性"会迫使结果长成什么样子。\textbf{这里的关键就是``一个首一多项式完全被它的根所确定下来"。具体来说，定义 $f_w\left(z_n\right):=f\left(w, z_n\right)$ , 即固定 $w \in \mathbb{C}^{n-1}$ 后来看, $f$ 就变成了一元函数。}那么\textbf{如果有这样的分解 $f_w=g_w \cdot h_w$ , 由于 $h$ 在某个包含 0 的邻域内都非零, 这就表示 $f_w$ 和 $g_w$ 的零点是相同的}, 所以唯一性是显然的。
-
-如果把 $f_w$ 的零点记为 $b_1(w), \ldots b_d(w)$, 那么就有 $$g_w\left(z_n\right)=\left(z_n-b_1(w)\right) \cdots\left(z_n-b_d(w)\right).$$ 虽然这里对零点的顺序有一些任意性, 但最后这个多项式还是一样的。如果希望 $$g\left(w, z_n\right)=z_n^d+a_1(w) \cdot z_n^{d-1}+\cdots+a_d(w)$$ 是一个 WP, 那么对比知道 $a_i(w)$ 是这些 $b_j(w)$ 的基本对称多项式。
-
-立马要面对的问题有两个: 
-\begin{fancybox}
-\begin{enumerate}
-   \item 为什么零点的数目 $d$ 与 $w$ 无关？
-   \item 最后得到的这个多项式为什么是全纯的? 
-\end{enumerate}
-\end{fancybox}
-
-\begin{remark}
-   虽然我们可以相信零点随着系数的变化也是全纯地变化, 但总有很多"奇异"的情况没办法直接去证明。
-\end{remark}
-
-这两个问题都可以从下述引理中得到解答:
-
-\begin{lemma}[][][lem:important1]
-   如果 $f$ 是一个一元全纯函数（在某个使下面命题有意义的区域上定义的）, 且它在球面 $\{|z|=r\}$ 上没有零点, 在开球 $\{|z|<r\}$ 内的零点为 $b_1, \ldots, b_d$ (多重零点按重数计算), 那么有 
-   $$\frac{1}{2 \pi \mathrm{i}} \oint_{|z|=r} z^k \frac{f^{\prime}(z)}{f(z)} \mathrm{d} z=\sum_{i=1}^d b_i^k,$$
-   其中 $k \geq 0$ 。
-\end{lemma}
-
-
+\begin{proof}
+   % We assert that the key point of the proof is the progress of constructing the weierstrass polynomial $g(z,w)$. Suppose we are given a function $f(z_1,\dots$ $,z_{n-1},w)$ holomorphic in some neighborhood of the origin in $\bC^n$, with $f(0,\dots,0)=0$. Assume that $f$ does not vanish identically on the $w$-axis, i.e., the power series expansion for $f$ around the origin contains a term $a\cdot w^d$ with $a\neq 0$ and $d\geq 1$; clearly this will be the case for most choices of coordinate system.
+   
+   
+   % 当然，照着书上抄一遍证明并没有什么意思，也挺麻烦，所以我就简单把思路过一遍。
+   首先这种存在唯一的定理大概都可以想想这个``唯一性"会迫使结果长成什么样子。\textbf{这里的关键就是``一个首一多项式完全被它的根所确定下来"。具体来说，定义 $f_w\left(z_n\right):=f\left(w, z_n\right)$ , 即固定 $w \in \mathbb{C}^{n-1}$ 后来看, $f$ 就变成了一元函数。}那么\textbf{如果有这样的分解 $f_w=g_w \cdot h_w$ , 由于 $h$ 在某个包含 0 的邻域内都非零, 这就表示 $f_w$ 和 $g_w$ 的零点是相同的}, 所以唯一性是显然的。
+   
+   如果把 $f_w$ 的零点记为 $b_1(w), \ldots b_d(w)$, 那么就有 $$g_w\left(z_n\right)=\left(z_n-b_1(w)\right) \cdots\left(z_n-b_d(w)\right).$$ 虽然这里对零点的顺序有一些任意性, 但最后这个多项式还是一样的。如果希望 $$g\left(w, z_n\right)=z_n^d+a_1(w) \cdot z_n^{d-1}+\cdots+a_d(w)$$ 是一个 WP, 那么对比知道 $a_i(w)$ 是这些 $b_j(w)$ 的基本对称多项式。
+   
+   立马要面对的问题有两个:
+   \begin{fancybox}
+      \begin{enumerate}
+         \item 为什么零点的数目 $d$ 与 $w$ 无关？
+         \item 最后得到的这个多项式为什么是全纯的?
+      \end{enumerate}
+   \end{fancybox}
+   
+   \begin{remark}
+      虽然我们可以相信零点随着系数的变化也是全纯地变化, 但总有很多"奇异"的情况没办法直接去证明。
+   \end{remark}
+   
+   这两个问题都可以从下述引理中得到解答:
+   
+   \begin{lemma}[][][lem:important1]
+      如果 $f$ 是一个一元全纯函数（在某个使下面命题有意义的区域上定义的）, 且它在球面 $\{|z|=r\}$ 上没有零点, 在开球 $\{|z|<r\}$ 内的零点为 $b_1, \ldots, b_d$ (多重零点按重数计算), 那么有
+      $$\frac{1}{2 \pi \mathrm{i}} \oint_{|z|=r} z^k \frac{f^{\prime}(z)}{f(z)} \mathrm{d} z=\sum_{i=1}^d b_i^k,$$
+      其中 $k \geq 0$ 。
+   \end{lemma}
+   \begin{proposition*}
+   测试一下
+   \end{proposition*}
+   
    只需要在某个零点附近展开看看留数 就知道了。那么\textbf{对第一个问题的回答就是``取足够小的邻域即可"}。具体来说, 先选择 $\varepsilon_n$ 使得在 $\left\{\left|z_n\right|<\varepsilon_n\right\}$ 内 $f_0$ 只有 0 这一个（ $d$ 重的）零点。在上述引理中取 $k=0$ ，于是 $f_w$ 的零点数目随 $w$ 的变化是全纯的, 但这必须是个整数, 所以在足够小的邻域内就恒为 $d$ 。当然了,可以把这个邻域取为 $\left(-\varepsilon_1, \varepsilon_1\right) \times \cdots \times\left(-\varepsilon_n, \varepsilon_n\right)$ 。
-
-\textbf{对第二个问题的回答就是``基本对称多项式和对称幂次和能相互表示"}。于是上述引理就说明了这些 $a_i$ 都是全纯的。
-
-
-至此\textbf{唯一剩下需要证明的就是 $h$ 是全纯函数了。为此只需要说明它相对于 $w$ 和 $z_n$ 都是全纯的然后由 Osgood 引理即得}。固定 $w$, 由于 $f_w$ 和 $g_w$ 零点完全相同, 所以 $h_w$ （即 $h$ 相对于 $z_n$ ) 是全纯的; 而对于固定的 $z_n$, 有 $h\left(w, z_n\right)=\frac{1}{2 \pi \mathrm{i}} \oint_{|\zeta|=\varepsilon_1} \frac{h_w(\zeta)}{\zeta-z_n} \mathrm{~d} \zeta$, 所以相对于 $w$也是全纯的。
+   
+   \textbf{对第二个问题的回答就是``基本对称多项式和对称幂次和能相互表示"}。于是上述引理就说明了这些 $a_i$ 都是全纯的。
+   
+   
+   至此\textbf{唯一剩下需要证明的就是 $h$ 是全纯函数了。为此只需要说明它相对于 $w$ 和 $z_n$ 都是全纯的然后由 Osgood 引理即得}。固定 $w$, 由于 $f_w$ 和 $g_w$ 零点完全相同, 所以 $h_w$ （即 $h$ 相对于 $z_n$ ) 是全纯的; 而对于固定的 $z_n$, 有 $h\left(w, z_n\right)=\frac{1}{2 \pi \mathrm{i}} \oint_{|\zeta|=\varepsilon_1} \frac{h_w(\zeta)}{\zeta-z_n} \mathrm{~d} \zeta$, 所以相对于 $w$也是全纯的。
    
 \end{proof}
 
 \begin{remark}
    对于 $f(z_1,\dots,z_n)=0$, 现在固定$w=z_1,\dots,z_{n-1}$, 则上述方程成为一个一元函数$f_w (z_n):=f(w,z_n)=0$. 唯一性。假设存在如题中的分解式 $f_w(z_n)=g_w(z_n)\cdot h_w(z_n)$,那么由 $f$在$w$上不一致为零，即存在$f_w$的幂级数展开式中某一个和项系数不为零，从而受此启发，我们可以将 $f_w$分为两部分，一部分包括了 $f_w$全部零点，记为 $g_w$,另一部分则不包含 $f_w$零点，记为 $h_w$, 即 $f_w=g_w\cdot h_w$. 我们不妨假设 $f_w$的所有零点为 $b_1(w),\dots,b_d(w)$, 则有 $g_w(z_n)=(z_n-b_1(w))\cdots (z_n-b_d(w))$, 也可以写为 $g_w=z_n^d+a_1(w) z_n^{d-1}+\dots+a_d(w)$. 这样一来，就确定了这个分解的存在性，剩下的就是证明唯一性是否成立？这涉及到两个问题，第一：这里所假设的零点 $b_i(w),i=1,\dots,d$的个数 $d$是否与 $w$相关，如果不相关，则唯一性显然成立；第二：上面所构造的 $g_w$是否全纯？如果 $g_w$全纯，那么 $h_w$全纯也是显然的。如若这两个问题都如此回答，则这个分解是有意义的，且 $g_w$ 是WP。
-
+   
    对于问题一，反证法，假设 $d$与 $w$有关，则有配对$(d_1,w_1), (d_2,w_2)$。那么就相应地有 $f_w=g_{w_1} h_{w_1}=g_{w_2}h_{w_2}$, 且 $g_{w_1}\neq g_{w_2}$.  可是由于我们构造 $g_w$时的假设 $f_w$ 与 $g_w$ 共零点，设零点集为 $\{c_1,\dots,c_q\}$，且在复数域中 $g_{w_1},g_{w_2}$都具有完全分解式，则 $g_{w_1}=\prod_{d_1}(z_n-b_i(w_1))= g_{w_2}=\prod_{d_2}(z_n-b_j(w_2))=\prod_{q}(z_n-c_k)$, 从而 $g_{w_1}=g_{w_2}, h_{w_1}=h_{w_2}$, 这与假设$g_{w_1}\neq g_{w_2}$相悖，故而 $d$与 $w$无关。
-
+   
    问题二如上面证明所述，应用\autoref{lem:important1}即可。
    % 题中假设知$f_w$是原点附近一元全纯函数且 $f(0,\dots,0)=0$, 由于$f$在 $w$坐标上不一致为零，这意味着假若如我们所设，将 $w=z_1,\dots,z_{n-1}$固定为 $w=0,\dots,0$,则 $f_0(0)=0$. 
 \end{remark}
@@ -855,44 +883,386 @@ which occurs in the Weierstrass preparation theorem, is called a Weierstrass pol
    每个局部环 $\mathcal{O}_{X, p}$ 都是 UFD。
 \end{corollary}
 \begin{proof}
-当然只需要对 $\mathcal{O}_{\mathbb{C}^n, 0}$ 来证明就好了。对于 $n=0,1$ 都是显然的, 我们尝试对 $n$ 归纳来证明。设 $f \in \mathcal{O}_{\mathbb{C}^n, 0}$, 那么 WPT 告诉我们 $f=g \cdot h$, 由于 $h$ 可逆我们不管它, 就只看这个 WP $g \in \mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 。
-
-按照归纳假设这是一个 UFD, 于是可以写 $g=g_1 \cdots g_k$, 其中 $g_i \in \mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 是不可约的。视 $g_i$ 为 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中的元素, 应用 WPT 有 $g_i=\tilde{g}_i \cdot h_i$, 其中 $\tilde{g}_i$ 是 WP 而 $h_i$ 可逆。于是有 $g=\left(\tilde{g}_1 \cdots \tilde{g}_k\right)\left(h_1 \cdots h_k\right)$, 第一个括号是一些 WP 的乘积所以仍然是一个 WP, 而第二个括号可逆, 所以按照 WPT 的唯一性知道 $g=\tilde{g}_1 \cdots \tilde{g}_k$ 。换言之, 每个 WP 都是一些不可约 WP 的乘积，所谓"不可约 WP"是指这个 WP 在 $\mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 中不可约。
-
-容易看出一个 WP 在 $\mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 中不可约则在 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中也不可约: 如果 $\tilde{g}$ 是一个不可约 WP且在 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中有 $\tilde{g}=f_1 \cdot f_2$, 则应用 WPT 得 $f_i=g_i \cdot h_i$, 于是 $\tilde{g}=\left(g_1 g_2\right)\left(h_1 h_2\right)$, 同样由 WPT 的唯一性知道 $\tilde{g}=g_1 g_2$ 。
-
-所以精确到相伴，每个 $f \in \mathcal{O}_{\mathbb{C}^n, 0}$ 都是一些不可约 WP 的乘积。唯一性的证明也是类似的，只需要说明 WP 在 $\mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 和 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中的不可约性是一样的即可（上面已经证明了一半了)。
+   当然只需要对 $\mathcal{O}_{\mathbb{C}^n, 0}$ 来证明就好了。对于 $n=0,1$ 都是显然的, 我们尝试对 $n$ 归纳来证明。设 $f \in \mathcal{O}_{\mathbb{C}^n, 0}$, 那么 WPT 告诉我们 $f=g \cdot h$, 由于 $h$ 可逆我们不管它, 就只看这个 WP $g \in \mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 。
+   
+   按照归纳假设这是一个 UFD, 于是可以写 $g=g_1 \cdots g_k$, 其中 $g_i \in \mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 是不可约的。视 $g_i$ 为 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中的元素, 应用 WPT 有 $g_i=\tilde{g}_i \cdot h_i$, 其中 $\tilde{g}_i$ 是 WP 而 $h_i$ 可逆。于是有 $g=\left(\tilde{g}_1 \cdots \tilde{g}_k\right)\left(h_1 \cdots h_k\right)$, 第一个括号是一些 WP 的乘积所以仍然是一个 WP, 而第二个括号可逆, 所以按照 WPT 的唯一性知道 $g=\tilde{g}_1 \cdots \tilde{g}_k$ 。换言之, 每个 WP 都是一些不可约 WP 的乘积，所谓"不可约 WP"是指这个 WP 在 $\mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 中不可约。
+   
+   容易看出一个 WP 在 $\mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 中不可约则在 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中也不可约: 如果 $\tilde{g}$ 是一个不可约 WP且在 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中有 $\tilde{g}=f_1 \cdot f_2$, 则应用 WPT 得 $f_i=g_i \cdot h_i$, 于是 $\tilde{g}=\left(g_1 g_2\right)\left(h_1 h_2\right)$, 同样由 WPT 的唯一性知道 $\tilde{g}=g_1 g_2$ 。
+   
+   所以精确到相伴，每个 $f \in \mathcal{O}_{\mathbb{C}^n, 0}$ 都是一些不可约 WP 的乘积。唯一性的证明也是类似的，只需要说明 WP 在 $\mathcal{O}_{\mathbb{C}^{n-1}, 0}[z]$ 和 $\mathcal{O}_{\mathbb{C}^n, 0}$ 中的不可约性是一样的即可（上面已经证明了一半了)。
 \end{proof}
 
-      
+
 
 \begin{theorem}[][Weierstrass Division Theorem][thm:Weierstrass Division Theorem]
-   Let $g(z,w)\in \mO_{n-1}[w]$ be a Weierstrass polynomial of degree $k$ in $w$. Then for any $f\in \mO_{n}$, we can write 
+   Let $g(z,w)\in \calO_{n-1}[w]$ be a Weierstrass polynomial of degree $k$ in $w$. Then for any $f\in \calO_{n}$, we can write
    \[f=g\cdot h+r\]
    with $r(z,w)$ a polynomial of degree $<k$ in $w$.
 \end{theorem}
-   \begin{proof}
-      Here is the proof in my words. 
-      
-   \end{proof}
+\begin{proof}
+   Here is the proof in my words.
+   
+\end{proof}
 
 \section{复流形}
 
 \begin{theorem}[][Inverse Function Theorem][thm:Inverse]
-   Let $U,V$ be sets in $\bC^n$ with $0\in U$ and $f: U\to V$ a holomorphic map with $\sF (f)=\Diff[f_j]{z_i}$ nonsingular at $0$. Then $f$ is one-to-one in a neiborhood of $0$, and $f^{-1}$ is holomorphic at $f(0)$.
+   Let $U,V$ be sets in $\bC^n$ with $0\in U$ and $f: U\to V$ a holomorphic map with $\scrF (f)=\Diff[f_j]{z_i}$ nonsingular at $0$. Then $f$ is one-to-one in a neiborhood of $0$, and $f^{-1}$ is holomorphic at $f(0)$.
 \end{theorem}
-   \begin{proof}
-      As $\sF (f)=\Diff[f_j]{z_i}$ nonsingular at $0$, i.e., not all of the $\Diff[f_j]{z_i}=0, i,j=1,\dots,n$,  thus $\det \abs{\sF_\bR (f)}=\abs{\det(\sF(f))}^2\neq 0$ at $0$, by ordinary inverse fuction theorem $f$ has a smooth inverse $f^{-1}$ near $0$. Now the left  thing is to prove this $f^{-1}$ is holomorphic at $f(0)$. Naturally, we have 
-      \[f^{-1} \circ f (z)=z,\]
-       so 
-       \[
-         \begin{aligned}
-            0 & =\frac{\partial}{\partial \bar{z}_i}\left(f^{-1}(f(z))\right) \\
-            & =\sum_k \frac{\partial f_j^{-1}}{\partial z_k} \cdot \frac{\partial f_k}{\partial \bar{z}_i}+\sum_k \frac{\partial f_j^{-1}}{\partial \bar{z}_k} \cdot \frac{\partial \bar{f}_k}{\partial \bar{z}_i} \\
-            & =\sum_k \frac{\partial f_j^{-1}}{\partial \bar{z}_k} \cdot\left(\frac{\overline{\partial f_k}}{\partial z_i}\right) \quad \text { for all } i, j
-            \end{aligned}\]
-   \end{proof}
-      
+\begin{proof}
+   As $\scrF (f)=\Diff[f_j]{z_i}$ nonsingular at $0$, i.e., not all of the $\Diff[f_j]{z_i}=0, i,j=1,\dots,n$,  thus $\det \abs{\scrF_\bR (f)}=\abs{\det(\scrF(f))}^2\neq 0$ at $0$, by ordinary inverse fuction theorem $f$ has a smooth inverse $f^{-1}$ near $0$. Now the left  thing is to prove this $f^{-1}$ is holomorphic at $f(0)$. Naturally, we have
+   \[f^{-1} \circ f (z)=z,\]
+   so
+   \[
+      \begin{aligned}
+         0 & =\frac{\partial}{\partial \bar{z}_i}\left(f^{-1}(f(z))\right)                                                                                                                                        \\
+           & =\sum_k \frac{\partial f_j^{-1}}{\partial z_k} \cdot \frac{\partial f_k}{\partial \bar{z}_i}+\sum_k \frac{\partial f_j^{-1}}{\partial \bar{z}_k} \cdot \frac{\partial \bar{f}_k}{\partial \bar{z}_i} \\
+           & =\sum_k \frac{\partial f_j^{-1}}{\partial \bar{z}_k} \cdot\left(\frac{\overline{\partial f_k}}{\partial z_i}\right) \quad \text { for all } i, j
+      \end{aligned}\]
+\end{proof}
+
+\begin{theorem}[][test][thm:1]
+\begin{myitemize}
+   \myitem 测试一下效果如何
+   \myitem 测试超长文段 As $\scrF (f)=\Diff[f_j]{z_i}$ nonsingular at $0$, i.e., not all of the $\Diff[f_j]{z_i}=0, i,j=1,\dots,n$,  thus $\det \abs{\scrF_\bR (f)}=\abs{\det(\scrF(f))}^2\neq 0$ at $0$, by ordinary inverse fuction theorem $f$ has a smooth inverse $f^{-1}$ near $0$. Now the left  thing is to prove this $f^{-1}$ is holomorphic at $f(0)$. Naturally, we have
+   \[f^{-1} \circ f (z)=z,\]
+   so
+   \[
+      \begin{aligned}
+         0 & =\frac{\partial}{\partial \bar{z}_i}\left(f^{-1}(f(z))\right)                                                                                                                                        \\
+           & =\sum_k \frac{\partial f_j^{-1}}{\partial z_k} \cdot \frac{\partial f_k}{\partial \bar{z}_i}+\sum_k \frac{\partial f_j^{-1}}{\partial \bar{z}_k} \cdot \frac{\partial \bar{f}_k}{\partial \bar{z}_i} \\
+           & =\sum_k \frac{\partial f_j^{-1}}{\partial \bar{z}_k} \cdot\left(\frac{\overline{\partial f_k}}{\partial z_i}\right) \quad \text { for all } i, j
+      \end{aligned}\]
+   \myitem 测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何测试一下效果如何
+   \myitem 初步的学习计划如下
+   \begin{itemize}
+      \item 第一步：学习基本概念和性质
+      \item 第二步：学习基本方法和步骤
+      \item 第三步：学习如何灵活运用并对原概念进行拓展
+   \end{itemize}
+   \myitem 学习方法
+\end{myitemize}
+\end{theorem}
+
+\section{四点共圆关键知识点汇总}
+
+
+
+
+
+$\bR,\scrR,\calR,\frakA,\rmH,\bfY$
+
+Remember an equation:
+\begin{equation}
+   \remember{thm:pythagorean}{
+      a^2 + b^2 = c^2
+   }
+\end{equation}
+
+Another equation:
+\begin{equation}
+   a^2 + b^2 = c^2 - 2ab\cos C\label{thm:cosine}
+\end{equation}
+
+Now we recall the first equation:
+\begin{equation}
+   \recall{thm:pythagorean}
+\end{equation}
+% ---------------------------------------------------------------------------- %
+\begin{Proposition}[正四棱锥与球的公共部分体积]\label{prop:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{Proposition}
+
+\begin{Definition}[正四棱锥与球的公共部分体积]\label{defi:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{Definition}
+
+\begin{Theorem}[正四棱锥与球的公共部分体积]\label{thm:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{Theorem}
+
+\begin{Lemma}[正四棱锥与球的公共部分体积]\label{Lemma:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{Lemma}
+
+\begin{Corollary}[正四棱锥与球的公共部分体积]\label{Corollary:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{Corollary}
+
+\begin{repitition}[正四棱锥与球的公共部分体积]\label{repitition:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{repitition}
+
+\begin{application}[正四棱锥与球的公共部分体积]\label{application:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{application}
+
+
+\begin{RemarK}[正四棱锥与球的公共部分体积]\label{Remark:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{RemarK}
+
+
+\begin{Example}[正四棱锥与球的公共部分体积]\label{Example:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{Example}
+
+\begin{Problem}[正四棱锥与球的公共部分体积]\label{Problem:2}
+   若正方体边长为$1$. 当点 $P$ 为正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球球心时，正方体 $A B C D-A_1 B_1 C_1 D_1$ 的内切球与正四棱雉 $P-A B C D$ 的公共部分的体积为 $\dfrac{\pi}{36}$
+\end{Problem}
+\begin{Proof}
+   测试一下
+\end{Proof}
+
+\begin{Solution}
+   测试一下
+\end{Solution}
+
+\section{函数关于一点中心对称知识点}
+
+% 重难点：
+
+% 重点：
+
+函数 $f(x)$ 关于 $(a, c)$ 对称 ⇔ 自变量之和等于 $2 a$, 函数值之和等于 $2 c$
+反过来，如果＂自变量之和为常数，函数值之和为常数＂，那么就表示该函数具有中心对称比如 $f(3+x)+f(3-x)=4$
+
+其自变量之和为常数 6 ，函数值之和也是常数 4 ，所以这就表示函数关于 $(3,2)$ 对称
+
+同轴对称 ${ }^{+}$一样，此种方法可以让我们实现灵活转化．
+
+比如说题目告诉我们 $f(3+x)+f(3-x)=4$ ，只要我们抓住＂自变量之和为常数 6 ，函数值之和也是常数 4 ＂，那么我们完全可以将其写成 $f(x)+f(6-x)=4$ ，这样可以避免复杂的换元转化。
+
+
+
+
+
+
+
+\chapter{学习计划：关于《Positivity in Algebraic Geometry I》的初步学习计划}
+\section{当前进度与笔记}
+\subsection{Ample of Nef Line Bundles}
+
+\section[短标题用于页眉]{当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记}
+\subsection{Ample of Nef Line Bundles当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记当前进度与笔记}
+
+
+\begin{maccode}{SQL}{数据库代码}
+    db_source=# CREATE PUBLICATION all_tables_pub FOR ALL TABLES;
+    CREATE PUBLICATION
+    
+    -- 查看一下复制槽
+    -- 订阅者连接到发布者并创建一个复制插槽
+    -- 其信息在 pg_replication_slots 表中查看下
+    db_source=# select * from pg_replication_slots;
+    slot_name           | sub_all_tables
+    plugin              | pgoutput
+    slot_type           | logical
+    datoid              | 17445
+    database            | db_source
+    temporary           | f
+    active              | f
+    active_pid          | ¤
+    xmin                | ¤
+    catalog_xmin        | 1452
+    restart_lsn         | 0/75062A8
+    confirmed_flush_lsn | 0/75062A8
+    wal_status          | reserved
+    safe_wal_size       | ¤
+    two_phase           | f
+    conflicting         | f
+\end{maccode}
+
+\begin{maccode}{python}{这是很长很长的相当相当长标题}
+def main(): # 主函数
+    pool = multiprocessing.Pool(processes=2) # 定义2个大小的进程池
+    for item in range(10): # 创建10个进程
+        result = pool.apply_async(func=work, args=(item,)) # 非阻塞形式执行进程
+        print(result.get()) # 获取进程返回结果
+    pool.close() # 执行完毕后关闭进程池
+    pool.join() # 等待进程池执行完毕
+\end{maccode}
+
+
+
+\begin{macdarkcode}{python}{深色液态玻璃代码框}
+def main():  # 主函数
+    pool = multiprocessing.Pool(processes=2)  # 定义 2 个大小的进程池
+    for item in range(10):  # 创建 10 个进程
+        result = pool.apply_async(func=work, args=(item,))  # 非阻塞形式执行进程
+        print(result.get())  # 获取进程返回结果
+    pool.close()  # 执行完毕后关闭进程池
+    pool.join()  # 等待进程池执行完毕
+\end{macdarkcode}
+
+
+\section{整式乘法之单项式乘多项式与多项式乘多项式}
+
+温故：上节课我们学习了整式乘法中的单项式与单项式乘积，是怎样做的呢？一般地，单项式与单项式相乘，把它们的系数、同底数幂分别相乘作为积的因式，对于只在一个单项式里含有的字母，则连同它的指数作为积的一个因式. 换句话说就是，两个单项式乘起来后还是一个单项式，它的系数是两单项式系数的积，它的字母部分需要合并同底数幂，其余不变，照抄即可。
+
+知新：那么有个很自然的问题是：如何做单项式与多项式或者多项式与多项式的乘法呢？
+
+先看这么一个图：
+\begin{figure*}[htbp]
+   \centering
+   \includegraphics[width=.6\linewidth]{figs/图解.png}
+\end{figure*}
+   
+由图可知，左侧的圆是采用分配律乘以括号内的每一个加项的，所以由此联想到单项式与多项式的积会不会也是类似的呢？
+
+先来看一个 例子，如课本所示，想要将一个长宽分别为 $p,b$的长方形花圃扩大面积，假如长不变，宽变为$a+b+c$，即宽向两侧延伸$a$和$c$, 求新的长方形面积就是$p(a+b+c)$, 也可以将每一个长方形面积先求出来再求和，即$pa+pb+pc$, 因为这表示的是一个意思，所以有 
+\[p(a+b+c)=pa+pb+pc.\]
+
+一般地，单项式与多项式相乘，就是用单项式
+去乘多项式的每一项，再把所得的积相加.
+
+现在我们按照课本：如图，为了扩大街心
+花园的绿地面积，把一块原长$a$ m、宽 $p $ m的长方形绿地，加长了$b$ m，加宽了$q$ m.你能用几种方法求出扩大后的绿地面积?
+
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.6\textwidth]{figs/PixPin_2026-05-26_18-39-53.png}
+   \caption{同时扩大长和宽}
+   \label{fig:Enlarging both length and width}
+\end{figure}
+
+原来是只改变宽，使得宽成为多项式，现在长也扩大了，变成了多项式，从而新的长方形面积就是两个多项式的乘积 $(p+q)\cdot (a+b)$, 同样地大长方形的面积等于每个小长方形面积之和，即
+\[
+(p+q)\cdot (a+b)=pa+pb+qa+qb.
+\]
+
+这意味着，
+\begin{figure}[htbp]
+   \centering
+   \includegraphics[width=.6\textwidth]{figs/PixPin_2026-05-26_18-48-19.png}
+   \caption{}
+   \label{}
+\end{figure}
+
+所以多项式与多项式相乘实则是将另一个多项式看做一个单项式的单项式与多项式乘积！表示形式为：
+
+\begin{align*}
+   (p+q)\cdot (a+b)&=(p+q)\cdot a+(p+q)\cdot b\\ 
+   &=pa+qa+pb+qb.
+\end{align*}
+   
+当然上面是我们的理解，那么落实到计算上，就应该这样：多项式与多项式相乘，先用一个多项式的每一项乘另一个多项式的每一项，再把所得的积相加。
+
+
+\subsection{练习巩固}
+\begin{example}[][练习巩固][exer:exer1]
+   例3 计算：
+（1）$(a+3)(a-2)$ ；
+
+（2）$(3 x+1)(x+2)$ ；
+
+（3）$(x-8 y)(x-y)$ ；
+
+（4）$(a+b)\left(a^2-a b+b^2\right)$ ．
+\end{example}
+   
+
+
+解：（1）$(a+3)(a-2)$
+
+$$
+\begin{aligned}
+&=  a \cdot a+a \cdot(-2)+ 
+ 3 \cdot a+3 \times(-2) \\
+&=  a^2-2 a+3 a-6 \\
+&=  a^2+a-6 ;
+\end{aligned}
+$$
+
+（3）$(x-8 y)(x-y)$
+
+$$
+\begin{aligned}
+& =x^2-x y-8 x y+8 y^2 \\
+& =x^2-9 x y+8 y^2 ;
+\end{aligned}
+$$
+
+（2）$(3 x+1)(x+2)$
+
+$$
+\begin{aligned}
+&=  (3 x) \cdot x+(3 x) \cdot 2+ 
+ 1 \cdot x+1 \times 2 \\
+&=  3 x^2+6 x+x+2 \\
+&=  3 x^2+7 x+2
+\end{aligned}
+$$
+
+（4）$(a+b)\left(a^2-a b+b^2\right)$
+
+$$
+\begin{aligned}
+& =a^3-a^2 b+a b^2+a^2 b-a b^2+b^3 \\
+& =a^3+b^3 .
+\end{aligned}
+$$
+
+\newpage
+\begin{problem}[][挑战题最后一道][prob:tiaozhanlast]
+   $(1+\frac 13)(1+\frac{1}{3^2})(1+\frac{1}{3^4})\cdots (1+\frac{1}{3^{1024}})=$
+\end{problem}
+   
+\begin{solution}
+   只需要在左侧乘以$\frac{(1-\frac{1}{3})}{(1-\frac{1}{3})}$, 然后变成
+   \[
+   \begin{aligned}
+      &\frac{{\color{purple}\br{1-\frac{1}{3}}}}{\br{1-\frac{1}{3}}} {\color{purple}\br{1+\frac{1}{3}}}\br{1+\frac{1}{3^2}}\br{1+\frac{1}{3^4}}\cdots \br{1+\frac{1}{3^{2024}}} \\[.5em]
+      &=\frac{
+{\color{blue}\br{1-\frac{1}{3^2}}\br{1+\frac{1}{3^2}}}\br{1+\frac{1}{3^4}}\cdots \br{1+\frac{1}{3^{1024}}}
+      }{\br{1-\frac{1}{3}}}\\ 
+      &=\frac{
+{\color{teal}\br{1-\frac{1}{3^4}}\br{1+\frac{1}{3^4}}}\cdots \br{1+\frac{1}{3^{1024}}}
+      }{\br{1-\frac{1}{3}}}\\ 
+      &=\cdots \\ 
+      &=\frac{1-\frac{1}{3^{2048}}}{1-\frac{1}{3}}\\ 
+      &=\frac{3}{2}-\frac{1}{2\cdot 3^{2047}}.
+   \end{aligned}
+   \]
+\end{solution}
+
+\section{一元一次方程组应用问题与数学建模方法}
+
+
+\begin{proposition}[][方法总结][prop:methodsandsummary]
+   针对不同的问题背景,共用一套建模思路. ``五问建模法''
+   \begin{myitemize}
+      \myitem 1. \textbf{问量：题目中究竟有哪些数量？}
+   
+   例如人数、件数、钱数、路程、时间、质量。要明确数量的单位、所属对象与时刻。
+      \myitem 2. \textbf{问关系：这些量如何联系？}
+   
+   是部分与整体、前后变化、差倍比较，还是利用数量公式进行换算？
+      \myitem 3. \textbf{问表达：怎样用未知数表示其他相关数量？}
+   
+   这里重点使用表格、线段图、状态变化图，而不是直接猜方程。
+      \myitem 4. \textbf{问约束：哪个条件必须成立？}
+   
+   这个条件是在限定总量、比较两个量，还是说明某个数量保持不变？
+      \myitem 5. \textbf{问方程：把有关表达式代入约束后得到什么？}
+   
+   检查等号两侧是否表示可比较的量，单位、对象、时刻和基准是否一致。
+   \end{myitemize}
+\end{proposition}
+   
+\begin{proposition}[][一些常用的问题建模模型][prop:models]
+\begin{myitemize}
+\myitem 1. 配套比问题 $\frac{A}{B}=\frac{a}{b}$;
+\myitem 2. 差倍问题 $A-B=a-b$ 或 $A-B=k(B-b)$;
+\myitem 3. 工程问题 $\lambda\frac{1}{A}+\eta\frac{1}{B}=1$;
+\myitem 4. 行程问题 $\frac{S}{V}=t$;
+\myitem 5. 利润问题 $P=R-C$与利润率 $Q=\frac{R-C}{C}$;
+
+\end{myitemize}
+
+\end{proposition}
+
+
 
 
 
@@ -903,4 +1273,4 @@ which occurs in the Weierstrass preparation theorem, is called a Weierstrass pol
 \ISBNcode{\EANisbn[ISBN=978-80-7340-097-2]} %
 \summary{A Research Notes Series For papers.}
 \makebottomcover
-\end{document} 
+\end{document}

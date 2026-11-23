@@ -1215,8 +1215,8 @@ support on $D_{m}\setminus S$. Using Lemma 4.1 and Lemma
 4.2 and the assumption $\sqrt{-1}\Theta_{he^{-\Psi}}\geq
 0$ on $D_{m}\setminus S$, we get
 \begin{align*}
-  \Theta_{\tilde{h}} =-\bd\bdd\log (\tilde{h})=-\bd\bdd\log(he^{-\Psi})-\bd\bdd\log(e^{-\phi}) 
-  =\Theta_{he^{-\Psi}}+\bd\bdd\phi,
+  \Theta_{\tilde{h}} =-\partial\bdd\log (\tilde{h})=-\partial\bdd\log(he^{-\Psi})-\partial\bdd\log(e^{-\phi}) 
+  =\Theta_{he^{-\Psi}}+\partial\bdd\phi,
 \end{align*}
 and
 \begin{equation}
@@ -1286,7 +1286,7 @@ u''(-v_{t_0,\varepsilon}\circ \Psi)\partial(v_{t_0,\varepsilon}\circ \Psi)
 这个计算表明，第二项 \(s''(-v_{t_0,\varepsilon} \circ \Psi) \partial(v_{t_0,\varepsilon} \circ \Psi) \wedge \bar{\partial}(v_{t_0,\varepsilon} \circ \Psi)\) 是从函数 \(s(u)\) 的二阶导数 \(s''(u)\) 乘以两个一阶导数的外积中得到的。这体现了在复分析中处理复合函数导数时链式法则和Leibniz法则的结合应用。这里记得分步逐次计算即可，耐心。
 \[\bdd[s(f\circ g)=s'(f\circ g)\cdot \bdd(f\circ g),]\]
 and
-\[\bd[\bdd(f\circ g)]=\bd[s'(f\circ g)\cdot \bdd(f\circ g)]=s''(f\circ g)\cdot \bd(f\circ g)\wedge \bdd (f\circ g)+s'(f\circ g)\cdot \bd\bdd(f\circ g).\]
+\[\partial[\bdd(f\circ g)]=\partial[s'(f\circ g)\cdot \bdd(f\circ g)]=s''(f\circ g)\cdot \partial(f\circ g)\wedge \bdd (f\circ g)+s'(f\circ g)\cdot \partial\bdd(f\circ g).\]
 Therefore,
 \begin{equation}
 \label{equ:smooth.vector1}
@@ -2375,7 +2375,7 @@ We naturally obtain the system of ODEs \ref{equ:unify2.GZ_unify},
 where $t\in(-A,+\infty)$, $\mathbf{C}=1$, $s\in
 C^{\infty}((-A,+\infty))$ satisfying $s\geq \frac{1}{\delta}$, $u\in
 C^{\infty}((-A,+\infty))$ satisfying
-$\lim_{t\to+\infty}u(t)=-\log(\frac{1}{\delta}c_{A}(-A)e^{A}+\int_{-A}^{\infty}c_{A}(t)e^{-t}dt)$,
+$\lim\limits_{t\to+\infty}u(t)=-\log(\frac{1}{\delta}c_{A}(-A)e^{A}+\int_{-A}^{\infty}c_{A}(t)e^{-t}dt)$,
 and $u''s-s''>0$.
 
 We solve the system of ODEs \ref{equ:unify2.GZ_unify} in subsection
@@ -2437,9 +2437,9 @@ where $A_{m}<+\infty$ is sufficient large.
 
 We just consider our proof for the condition $(1)$ (the case under
 the condition $(2)$ can be proved similarly), By Lemma
-\ref{l:relate_c_A_delta}, for any given $A'<A$, it follows that
+\ref{:relate_c_A_delta}, for any given $A'<A$, it follows that
 there exists $c_{A''}$ and $\delta''>0$ satisfying conditions 1),
-2), 3) in Lemma \ref{l:relate_c_A_delta}, where $A''<A$ and
+2), 3) in Lemma \ref{:relate_c_A_delta}, where $A''<A$ and
 $A''>A-\varepsilon$.
 
 Note that $\sqrt{-1}\partial\bar\partial\Psi\geq0$, and
@@ -2464,8 +2464,8 @@ holomorphic line bundle when $S=\{0\}$, and $\Psi=2m\log|z|$.
 When $A=+\infty$, $\mathbb{B}^{m}(0,e^{\frac{A}{2m}}):=\mathbb{C}^{m}$.
 \end{Remark}
 
-Using Theorem \ref{t:guan-zhou-unify} and Corollary
-\ref{l:extension_equ.2} by taking $d_{2}=1$, we obtain
+Using Theorem \ref{t:guan-zhou-unify} and Lemma
+\ref{:extension_equ.2} by taking $d_{2}=1$, we obtain
 
 \begin{corollary}[][][c:unify.1]
   Let $\Omega$ be an open Riemann surface which
@@ -2956,8 +2956,8 @@ then we have $\#\{z|L_{\Omega\setminus\{z_{1}\}}(z,t_{1})=0\}=0$.
 \cutoff
 \textbf{Integration by Parts}
 \begin{align*}
-  (i[e(\bd \eta),\Lambda]u,\bdd^*_\varphi u)_\varphi &= \int_X e^{-\varphi} (i[e(\bd \eta),\Lambda]u) \wedge \bar* (\bdd^*_\varphi u)\\
-  &=(i\bdd_\varphi [e(\bd \eta),\Lambda]u,u)_\varphi.
+  (i[e(\partial \eta),\Lambda]u,\bdd^*_\varphi u)_\varphi &= \int_X e^{-\varphi} (i[e(\partial \eta),\Lambda]u) \wedge \bar* (\bdd^*_\varphi u)\\
+  &=(i\bdd_\varphi [e(\partial \eta),\Lambda]u,u)_\varphi.
 \end{align*}
 \cutoff
 由$ST=0$, 我们有$(ST)^*=T^* S^*=0$, 则$\mathrm{Dom} T^*\supset \mathrm{Ran}(S^*)$, 而基于下面的分析知 $\mathrm{Ran}(S^*)=[\mathrm{Ker}(S)]^\bot$, 从而对于任意的$k\in\mathrm{Dom} T^*$, 有$k=k_1+k_2$, 其中 $k_1\in \ker S, k_2\in [\mathrm{Ker}(S)]^\bot$.

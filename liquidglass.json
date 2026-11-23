@@ -1,0 +1,11 @@
+{
+  "engine": "xelatex",
+  "documents": {
+    "cnnotes.tex": {
+      "shell_escape": true
+    },
+    "geometry-structures.tex": {
+      "engine": "lualatex"
+    }
+  }
+}

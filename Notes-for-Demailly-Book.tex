@@ -10,10 +10,11 @@
 \pagecolor{nuanbai}
 \beautybookstyle={
   cover-choose=en, % en/cn/enfig/birkar
-  math-font=plain, % plain/mtpro2
+  math-font=plain, % plain/mtpro2/fourier
   sidebar=on, % on/off
 }
 \usepackage{stys/beautybook-cnsettings} % 中文配置文件
+\usepackage{stys/beautybook-liquidglass} % LiquidGlass content materials
 \begin{document}
 \thispagestyle{empty}
 \title{Notes for Demailly's Book}
@@ -128,11 +129,11 @@ Leibniz 律反映了微分和楔积运算的结合性质，是微分几何和复
     \lang{T_{df} ,u} &= \int_M df\wedge u=0,\\ 
 \lang{dT_f,u} &=(-1)^{q+1}\lang{T_f,du}=(-1)^{q+1}\int_M f\wedge du=0.
 \end{align*}
-    Where $df=du=0$, for the reason that $f\in {}^1\sE^q(M)$ and $u\in \sD^{m-q-1}(M)$.
+    Where $df=du=0$, for the reason that $f\in {}^1\scrE^q(M)$ and $u\in \scrD^{m-q-1}(M)$.
 \end{fancybox}
 \begin{remark}
-    ${}^1\sE^q(M)$: $M$上具有给定半范数 $p^s_L$拓扑的一阶可微$p$形式所构成的空间;
-    $\sD^{m-q-1}(M)$ : ${}^0\sE^{m-q-1}(M)$的紧支子空间.
+    ${}^1\scrE^q(M)$: $M$上具有给定半范数 $p^s_L$拓扑的一阶可微$p$形式所构成的空间;
+    $\scrD^{m-q-1}(M)$ : ${}^0\scrE^{m-q-1}(M)$的紧支子空间.
 
 从而因为$df$和 $du$ 超维数了($d$是$(1,1)$型,而$p$形式则是 $(0,p)$型)，从而只能为$0$.
 \end{remark}
@@ -163,7 +164,7 @@ Leibniz 律反映了微分和楔积运算的结合性质，是微分几何和复
     Let $M_1,M_2$ be two oriented differentiable manifolds of dimension $m_1,m_2$, respectively. Let $F\colon M_1\to M_2$ be a smooth map. Then the \textbf{Pull-Back morphism} $F^*$ is defined by 
     \[
         \begin{aligned}
-                    F^* \colon {}^s \sD^p(M_2) &\to {}^s\sE^p(M_1)\\ 
+                    F^* \colon {}^s \scrD^p(M_2) &\to {}^s\scrE^p(M_1)\\ 
                     u* &\mapsto F^* u.
         \end{aligned}
     \]
@@ -209,11 +210,11 @@ The following is the useful information.
     
 
 \begin{theorem}[][][thm:2.14]
-    For every $T\in {}^s\sD'_p(M_1)$ such that $F|_{\supp T}$ is \textbf{proper}, the direct image $F_\star T\in {}^s\sD'_p(M_2)$ is such that
+    For every $T\in {}^s\scrD'_p(M_1)$ such that $F|_{\supp T}$ is \textbf{proper}, the direct image $F_\star T\in {}^s\scrD'_p(M_2)$ is such that
     \begin{enumerate}
         \item $\supp F_\star T\subset F(\supp T)$;
         \item $\dd (F_\star T)=F_\star (\dd T)$;
-        \item $F_\star (T\wedge F^\star g)=(F_\star T)\wedge g, \quad \forall g\in ^s\sE^q(M_2.\bR)$;
+        \item $F_\star (T\wedge F^\star g)=(F_\star T)\wedge g, \quad \forall g\in ^s\scrE^q(M_2.\bR)$;
         \item If $G\colon M_2\to M_1$ is a $C^\infty$ map such that $(G\circ F)|_{\supp T}$ is \textbf{proper}, then 
         \[G_\star (F_\star T)=(G\circ F)_\star T.\]
     \end{enumerate}
@@ -546,25 +547,29 @@ More generally, if $F$ is a Griffiths positive (or ample) vector bundle of rank 
  \textbf{4. 参考文献}
 
 上述定义的思想可以从以下参考文献中找到相关背景：
-
-1. 关于 MMP 的来源：
-   - F. Ambro, A. Fujino, S. Mori, et al. 的相关文献，尤其是：
-     -  \textit{"Introduction to the Theory of MMP"}，见 Mori \& Matsuki 的书籍或教材。
-     -  \textit{"On abundance theorems"} by Fujino.
-   - 这些书中对 $k$-ample 的定义在代数几何背景下进行了详细阐述。
-
-2. 增广性的解析几何观点：
-   - Demailly 的经典教材，例如：
-     -  \textit{"Complex Analytic and Differential Geometry"}，可作为解析背景下的基本参考。
-   - Voisin 的  \textit{"Hodge Theory and Complex Algebraic Geometry"}，也讨论了增广性和 Kähler 流形的相关几何特性。
-
-3. 关于弱 $1$-完备流形的性质：
-   - H. Grauert, R. Remmert 的文献对非紧解析流形的完备性进行了讨论。
-   - K. Ohsawa 的  \textit{"Analysis of Several Complex Variables"} 也可能对非紧 Kähler 流形的几何分析有帮助。
-
+\paragraph*{关于 MMP 的来源}
+\begin{enumerate}[label=\arabic*.]
+    \item F. Ambro, A. Fujino, S. Mori, et al. 的相关文献，尤其是：
+    \begin{itemize}
+        \item \textit{"Introduction to the Theory of MMP"}，见 Mori \& Matsuki 的书籍或教材。
+        \item \textit{"On abundance theorems"} by Fujino。
+    \end{itemize}
+    \item 这些书中对 $k$-ample 的定义在代数几何背景下进行了详细阐述。
+\end{enumerate}
+\paragraph*{增广性的解析几何观点}
+\begin{enumerate}[label=\arabic*.]
+    \item Demailly 的经典教材，例如：
+    \begin{itemize}
+        \item \textit{"Complex Analytic and Differential Geometry"}，可作为解析背景下的基本参考。
+    \end{itemize}
+    \item Voisin 的 \textit{"Hodge Theory and Complex Algebraic Geometry"}，也讨论了增广性和 Kähler 流形的相关几何特性。
+\end{enumerate}
+\paragraph*{关于弱 $1$-完备流形的性质}
+\begin{enumerate}[label=\arabic*.]
+    \item H. Grauert, R. Remmert 的文献对非紧解析流形的完备性进行了讨论。
+    \item K. Ohsawa 的 \textit{"Analysis of Several Complex Variables"} 也可能对非紧 Kähler 流形的几何分析有帮助。
+\end{enumerate}
 \end{solution}
-    
-
 
 % ---------------------------------------------------------------------------- %
 
@@ -610,27 +615,26 @@ This definition bridges the analytic framework of Kähler geometry with the alge
     
 \begin{solution}
      
-在非射影流形上，**不存在传统意义上的 very ample 线性系统或对象**。这是因为 very ample 的定义本质上依赖于嵌入到射影空间的能力，而非射影流形无法通过任何线性系统或线性流形嵌入到射影空间中。以下是更详细的分析：
-
-1.  \textbf{Very ample 的定义 } 
+在非射影流形上，\textbf{不存在传统意义上的 very ample 线性系统或对象}。这是因为 \textit{very ample 的定义本质上依赖于嵌入到射影空间的能力，而非射影流形无法通过任何线性系统或线性流形嵌入到射影空间中}。以下是更详细的分析：
+\begin{enumerate}
+    \item \textbf{Very ample 的定义 } 
 一个线性系统（或者更一般的一个 Cartier divisor $D$）被称为 very ample，意味着 $D$ 确定了一个嵌入 $\phi_{|D|}: X \to \mathbb{P}^N$，其中 $X$ 是一个射影多样体。换句话说：
+\begin{itemize}
+    \item  $D$ 的全局截面生成了一个足够大的空间，能够给出 $X$ 到 $\mathbb{P}^N$ 的嵌入；
+    \item $X$ 必须是一致的代数几何对象，特别是射影性。
+\end{itemize}
 
-- $D$ 的全局截面生成了一个足够大的空间，能够给出 $X$ 到 $\mathbb{P}^N$ 的嵌入；
-
-- $X$ 必须是一致的代数几何对象，特别是射影性。
-
-2.  \textbf{非射影流形的情形} 
+\item  \textbf{非射影流形的情形} 
 非射影流形（如某些 Kähler 流形或一般复流形）没有足够的代数结构来支持射影嵌入，因此不存在非常丰富的线性系统，也就不能定义非常 ample 的对象。
 
-3.  \textbf{替代概念}  
+\item  \textbf{替代概念}  
 虽然 very ample 本身与非射影流形无关，但我们可以讨论与其类似的几何性质，如：
-
--  \textbf{伪有效 (pseudo-effective) line bundles}: 定义弱极限意义上的正性；
-
--  \textbf{广义丰富性 (bigness)}：是否有足够多的全局截面覆盖流形；
-
--  \textbf{奇异极值流形 (quasi-projective embeddings)}: 在特定条件下，寻找嵌入可能的部分投影。
-
+\begin{itemize}
+\item  \textbf{伪有效 (pseudo-effective) line bundles}: 定义弱极限意义上的正性；
+\item  \textbf{广义丰富性 (bigness)}：是否有足够多的全局截面覆盖流形；
+\item  \textbf{奇异极值流形 (quasi-projective embeddings)}: 在特定条件下，寻找嵌入可能的部分投影。
+\end{itemize}
+\end{enumerate}
 结论是，在非射影流形上，严格意义上的 very ample 对象并不存在，但可以通过推广的正性和丰富性概念研究类似问题。
 \end{solution}
     

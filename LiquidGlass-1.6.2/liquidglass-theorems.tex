@@ -1,0 +1,87 @@
+%% Portable Beautybook ribbon theorem preset. SPDX-License-Identifier: MIT
+\tcbuselibrary{theorems}
+\input{\lg@packagedir liquidglass-ribbon.tex}
+\RequirePackage{liquidglass-timeline}
+\definecolor{LGRibbonGreen}{RGB}{66,102,102}
+\definecolor{LGRibbonIndigo}{RGB}{6,82,121}
+\definecolor{LGRibbonRose}{RGB}{203,58,86}
+\definecolor{LGRibbonTea}{RGB}{179,92,68}
+\definecolor{LGRibbonWine}{RGB}{140,67,86}
+
+% Use the original title geometry for normal headings. Measure only to add
+% room for a wrapped heading in a narrow template.
+% 普通标题复用原版几何，窄盒中的长标题按实际行高增加留白。
+\newsavebox\lg@titlemeasure
+\def\lg@titlelayout{%
+  \def\lg@ribbondisplay{\tcbtitletext}%
+  \edef\lg@titlemax{\the\dimexpr(\kvtcb@width)*78/100\relax}%
+  \sbox\lg@titlemeasure{\bfseries\hspace*{3pt}\kvtcb@title}%
+  \ifdim\wd\lg@titlemeasure>\lg@titlemax\relax
+    \sbox\lg@titlemeasure{\parbox{\lg@titlemax}{\centering\bfseries\kvtcb@title}}%
+    \tcbset{top/.expanded={\the\dimexpr\kvtcb@top+(\ht\lg@titlemeasure+\dp\lg@titlemeasure)/2\relax}}%
+    \def\lg@ribbondisplay{\parbox{\lg@titlemax}{\centering\tcbtitletext}}%
+  \fi
+}
+\def\lg@theoreminitial{%
+  \iflg@backgroundset\else\tcbset{lg image=@silver}\fi
+  \tcbset{lg material=reading,lg lift=cloud,lg radius={3mm,northwest=5pt},coltext=black}%
+}
+\tcbset{
+  lg theorem accent/.store in=\lg@ribbonaccent,
+  lg theorem measure title/.code={\lg@titlelayout},
+  lg theorem ribbon/.style={
+    breakable,arc=3pt,boxrule=0pt,top=6mm,bottom=5mm,
+    pad at break=2mm,topsep at break=2mm,bottomsep at break=0mm,
+    extras first={bottom=3mm},extras middle={top=3mm,bottom=0mm},
+    extras last={top=0mm},
+    before pre=\smallskip,after app=\smallskip,lg theorem accent=LGRibbonGreen,
+    code={\let\lg@initial\lg@theoreminitial},liquid glass,
+    detach title,title after break={},
+    at begin tikz={\lg@ribbonlayers},
+    overlay unbroken={\lg@ribbontop{\lg@ribbondisplay}{\lg@ribbonaccent}\lg@ribbonfoot{\lg@ribbonaccent}},
+    overlay first={\lg@ribbontop{\lg@ribbondisplay}{\lg@ribbonaccent}},
+    overlay last={\lg@ribbonfoot{\lg@ribbonaccent}},
+  },
+  lg theorem language/.is choice,
+  lg theorem language/en/.code={\def\lg@theoremlanguage{en}},
+  lg theorem language/zh/.code={\def\lg@theoremlanguage{zh}},
+  lg theorem language=en,
+}
+\newcommand\glasssettheoremlanguage[1]{\tcbset{lg theorem language=#1}}
+\newcommand*\lg@theoremlabel[1]{\csname lg@term@#1@\lg@theoremlanguage\endcsname}
+\newcommand*\lg@theoremnames[3]{%
+  \@namedef{lg@term@#1@en}{#2}\@namedef{lg@term@#1@zh}{#3}%
+}
+\newcommand*\lg@theoremdescription[1]{%
+  \ifstrempty{#1}{}{(\itshape#1)}%
+}
+\newcommand*\lg@declaretheorem[6]{%
+  \lg@theoremnames{#1}{#2}{#3}%
+  \NewTColorBox[auto counter,number within=section]{lg#1}{+O{} +o +m m}{%
+    lg theorem ribbon,lg theorem accent=#4,fontupper=#6,
+    title={\lg@theoremlabel{#1}\ \thetcbcounter\ \lg@theoremdescription{##3}},%
+    IfValueTF={##2}{nameref={##2}}{nameref={##3}},%
+    theo@label={#5}{##4},##1,lg theorem measure title%
+  }%
+  \NewTColorBox{lg#1*}{+O{} +m}{%
+    lg theorem ribbon,lg theorem accent=#4,fontupper=#6,
+    title={\lg@theoremlabel{#1}\lg@theoremdescription{##2}},%
+    ##1,lg theorem measure title%
+  }%
+}
+\lg@declaretheorem{theorem}{Theorem}{定理}{LGRibbonGreen}{lgthm}{\itshape}
+\lg@declaretheorem{proposition}{Proposition}{命题}{LGRibbonGreen}{lgprop}{\itshape}
+\lg@declaretheorem{lemma}{Lemma}{引理}{LGRibbonIndigo}{lglem}{\itshape}
+\lg@declaretheorem{corollary}{Corollary}{推论}{LGRibbonTea}{lgcor}{\itshape}
+\lg@declaretheorem{definition}{Definition}{定义}{LGRibbonRose}{lgdef}{\normalsize}
+\lg@declaretheorem{conjecture}{Conjecture}{猜想}{LGRibbonIndigo}{lgconj}{\itshape}
+\lg@declaretheorem{example}{Example}{例题}{LGRibbonGreen}{lgex}{\normalsize}
+\lg@declaretheorem{exercise}{Exercise}{练习}{LGRibbonWine}{lgexr}{\normalsize}
+\lg@declaretheorem{problem}{Problem}{问题}{LGRibbonWine}{lgprob}{\itshape}
+\lg@declaretheorem{remark}{Remark}{注记}{LGRibbonGreen}{lgrem}{\normalsize}
+\lg@declaretheorem{application}{Application}{应用}{LGRibbonIndigo}{lgapp}{\normalsize}
+\lg@theoremnames{proof}{Proof}{证明}
+\lg@theoremnames{solution}{Solution}{解答}
+\newtcolorbox{lgproof}[1][]{lg theorem ribbon,title={\lg@theoremlabel{proof}},#1,lg theorem measure title}
+\newtcolorbox{lgsolution}[1][]{lg theorem ribbon,title={\lg@theoremlabel{solution}},#1,lg theorem measure title}
+\endinput

@@ -1,0 +1,49 @@
+% A short, real beautybook example. Build with the supplied menu script.
+\documentclass[lang=cn,zihao=-4,a4paper,fontset=none]{beautybook}
+\beautybookstyle={cover-choose=cn,math-font=plain,sidebar=off}
+\usepackage{stys/beautybook-cnsettings}
+\usepackage{stys/beautybook-liquidglass}
+\chapimage{c10}
+\partimage{c11}
+\setlength\parindent{2em}
+\begin{document}
+\mainmatter
+\chapter{玻璃材质已经接好}
+本例沿用这份工程原来的文类、字体和定理环境。编号、可选标题与引用的写法保持不变。
+\section{原有盒子直接使用}
+\begin{defi}[第一套定理]
+旧写法 \texttt{defi} 自动获得玻璃表面，定理正文与数学公式仍由 \LaTeX{} 排版。
+\[ (a+b)^2=a^2+2ab+b^2. \]
+\end{defi}
+\begin{problem}[][第二套定理][demo:problem]
+问题编号与旧的彩色标题装饰保留。这里的背景来源为随包默认素材。
+\end{problem}
+\begin{Definition}[note={第三套定理},label={demo:definition}]
+大写的 \texttt{Definition} 来自原模板的 keytheorems 系统，同样使用玻璃表面。
+\end{Definition}
+\begin{fancybox}
+原来的 \texttt{fancybox} 环境也可以照常调用。
+\end{fancybox}
+\begin{tcolorbox}[title={普通 tcolorbox},arc=3mm,breakable]
+正文区的普通盒子在选项读取完成后加入材质，因此旧背景填充不会再盖住玻璃层。
+\end{tcolorbox}
+\begin{glassbox}[title={逐盒选择深色},lg theme=dark]
+显式使用 \texttt{glassbox} 时，当前盒子的深浅色与参数设置优先。
+\end{glassbox}
+\section{长内容自动跨页}
+下方使用原来的 \texttt{definition} 环境，演示同一逻辑盒子的连续背景与分页。
+\begin{definition}[][跨页定义][demo:long]
+\newcount\demoParagraph\demoParagraph=0
+\loop\ifnum\demoParagraph<28
+\advance\demoParagraph by1
+\textbf{第\the\demoParagraph 段。} 背景只在一个逻辑盒子开始时确定，跨页后继续使用同一来源；正文、公式与编号始终清晰。\quad $a^2+b^2=c^2$。\par\medskip
+\repeat
+\end{definition}
+\section{小白用户只需改这两行}
+\begin{verbatim}
+\BeautyGlassBackground{liquidglass-assets/default.png}
+\BeautyGlassSetup{lg reference}
+\end{verbatim}
+把设置放在主文件导言区加载 \texttt{stys/beautybook-liquidglass} 之后即可。\par
+问题 \ref{demo:problem} 与定义 \ref{demo:definition} 的标签仍按原模板引用。
+\end{document}

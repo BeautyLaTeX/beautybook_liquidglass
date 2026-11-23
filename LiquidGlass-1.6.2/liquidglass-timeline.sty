@@ -1,0 +1,250 @@
+%% Connected timeline lists for Beautybook
+\NeedsTeXFormat{LaTeX2e}[2022-06-01]
+\ProvidesPackage{liquidglass-timeline}[2026/11/23 Shared connected timeline lists]
+\RequirePackage{enumitem,etoolbox,tikzpagenodes,refcount,zref-abspage,zref-savepos,tcolorbox}
+\tcbuselibrary{breakable,hooks,skins}
+
+\definecolor{BeautybookTimelineGray}{HTML}{98A2AE}
+\definecolor{BeautybookTimelineRing}{HTML}{85919E}
+\definecolor{BeautybookTimelineSteel}{HTML}{758590}
+\tikzset{beautybook timeline rail/.style={
+   draw=BeautybookTimelineGray,draw opacity=.68,line width=.55pt,
+   line cap=round,dash pattern=on .75pt off 2.05pt
+}}
+\newcommand{\drawoptionsconn}{beautybook timeline rail,shorten <=.65pt,shorten >=.65pt}
+\newcommand{\drawoptionsshort}{beautybook timeline rail,shorten <=.65pt}
+
+\newcounter{mylist}
+\newcounter{mycnt}[mylist]
+\ExplSyntaxOn
+\cs_new:Npn \BeautybookListKey { \int_to_alph:n { \value{mylist} } }
+\cs_new:Npn \beautybook@timelinelastx { \int_use:N \tex_lastxpos:D }
+\ExplSyntaxOff
+
+\let\beautybook@timelinebox\@empty
+\let\beautybook@timelinepending\@empty
+\def\beautybook@timelinelayer{upper}
+\def\beautybook@timelinehalfslot{3.45pt}
+\newcommand*\beautybook@timelinetextleft{%
+   \dimexpr1in+\hoffset+\if@twoside\ifodd\c@page\oddsidemargin\else\evensidemargin\fi
+      \else\oddsidemargin\fi\relax
+}
+
+% In the native two-column layout, savepos identifies the column at shipout.
+% 双栏模式以节点实际输出的位置判断栏号，避免在换栏时提前记录。
+\zref@newprop*{beautybookcolumn}[1]{%
+   \ifdim\beautybook@timelinelastx sp>
+      \dimexpr\beautybook@timelinetextleft+\columnwidth+\columnsep/2\relax
+      2\else1\fi
+}
+\newcommand*\beautybook@timelineref[1]{%
+   \if@twocolumn
+      \ZREF@zsavepos\zref@labelbyprops{abspage,beautybookcolumn}{#1}%
+   \else
+      \zref@labelbyprops{#1}{abspage}%
+   \fi
+}
+\newcommand*\beautybook@timelineslot[2]{%
+   \ifnum\zref@extractdefault{#1}{abspage}{0}=0 0\else
+      \number\numexpr(\zref@extractdefault{#1}{abspage}{0}-1)*#2+
+         \zref@extractdefault{#1}{beautybookcolumn}{1}\relax
+   \fi
+}
+
+% A list can span pages on which it has no node. Build a page index from the
+% previous run's item positions, with distinct entries for the page and each box.
+% 长条目可能独占整页。按上一轮节点位置索引这些续线，并区分盒内与正文。
+\newcommand*\BeautybookTimelineSpan[6]{%
+   \gappto\beautybook@timelinepending{\beautybook@timelineprepare{#1}{#2}{#3}{#4}{#5}{#6}}%
+}
+\ExplSyntaxOn
+\cs_new_protected:Npn \beautybook@timelineprepare #1#2#3#4#5#6
+  {
+    \int_step_inline:nn {#2-1}
+      {
+        \int_compare:nNnT {\beautybook@timelineslot{item-#1##1}{#6}} > {0}
+          {
+            \int_step_inline:nnn
+              {\beautybook@timelineslot{item-#1##1}{#6}+1}
+              {\beautybook@timelineslot{item-#1\int_eval:n{##1+1}}{#6}-1}
+              {
+                \tl_if_empty:nTF {#3}
+                  {
+                    \csxappto{beautybook@timelinepage@\int_eval:n{\int_div_truncate:nn{####1-1}{#6}+1}}
+                      {\noexpand\beautybook@timelinepagerail{\int_eval:n{\int_mod:nn{####1-1}{#6}}}{#5}}
+                  }
+                  {\csgappto{beautybook@timelinebox@#3@####1}{\beautybook@timelineboxrail{#4}{#5}}}
+              }
+          }
+      }
+  }
+\ExplSyntaxOff
+\AtBeginDocument{\beautybook@timelinepending\global\let\beautybook@timelinepending\@empty}
+
+\newcommand*\beautybook@timelinepagerail[2]{%
+   \edef\beautybook@railx{\the\dimexpr\beautybook@timelinetextleft+
+      (\columnwidth+\columnsep)*#1+#2\relax}%
+   \edef\beautybook@railtop{\the\dimexpr-1in-\voffset-\topmargin-\headheight-\headsep\relax}%
+   \draw[beautybook timeline rail] (\beautybook@railx,\beautybook@railtop) --
+         ++(0,-\textheight);
+}
+\AddToHook{shipout/foreground}{%
+   \if@fcolmade\else
+      \ifcsname beautybook@timelinepage@\the\ReadonlyShipoutCounter\endcsname
+         \put(0,0){\begin{tikzpicture}[overlay]
+            \csuse{beautybook@timelinepage@\the\ReadonlyShipoutCounter}%
+         \end{tikzpicture}}%
+      \fi
+   \fi
+}
+
+% The original box identity survives tcolorbox's first/middle/last redraws.
+% Clips affect only the body at a page break. Title, frame and ornaments use
+% their original drawing hooks.
+% 断页片段沿用盒子编号，正文裁切仅在分页边界生效，边框和标题沿用原绘制入口。
+\appto\tcb@afteroptions@hook{%
+   \ifnum\c@tcblayer=1\relax
+      \ifx\beautybook@timelinebox\@empty
+         \iftcb@isbreakable
+            \edef\beautybook@timelinebox{\thetcolorboxnumber}%
+            \tcbset{before lower app={\def\beautybook@timelinelayer{lower}}}%
+         \fi
+      \else
+         \ifcsname beautybook@timelineused@\beautybook@timelinebox\endcsname
+            \tcbset{at end tikz={\beautybook@timelineboxpart}}%
+         \fi
+         \ifcsname beautybook@timelinecrossing@\beautybook@timelinebox\endcsname
+            \let\beautybook@timelineupper\tcb@tdraw@upper
+            \let\beautybook@timelinelower\tcb@tdraw@lower
+            \def\tcb@tdraw@upper{\beautybook@timelineclip{\beautybook@timelineupper}}%
+            \def\tcb@tdraw@lower{\beautybook@timelineclip{\beautybook@timelinelower}}%
+         \fi
+      \fi
+   \fi
+}
+\newcommand*\beautybook@timelineclip[1]{%
+   \begin{pgfscope}%
+      \def\beautybook@clipbottom{0pt}%
+      \edef\beautybook@cliptop{\the\dimexpr\tcb@height-\tcb@h@padtitle\relax}%
+      \ifdefstring{\tcb@split@state}{last}{\def\beautybook@clipbottom{-\paperheight}}{}%
+      \ifdefstring{\tcb@split@state}{first}{\let\beautybook@cliptop\paperheight}{}%
+      \pgfinterruptboundingbox
+      \pgfpathrectanglecorners
+         {\pgfqpoint{-\paperwidth}{\beautybook@clipbottom}}
+         {\pgfqpoint{2\paperwidth}{\beautybook@cliptop}}%
+      \pgfusepath{clip}%
+      \endpgfinterruptboundingbox
+      #1%
+   \end{pgfscope}%
+}
+\newcommand*\beautybook@timelineboxpart{%
+   \edef\beautybook@partlabel{beautybook-timeline-\beautybook@timelinebox-\number\c@tcbbreakpart}%
+   \beautybook@timelineref{\beautybook@partlabel}%
+   \edef\beautybook@partpage{\beautybook@timelineslot{\beautybook@partlabel}{\if@twocolumn2\else1\fi}}%
+   \begin{scope}[overlay]
+      \csuse{beautybook@timelinebox@\beautybook@timelinebox @\beautybook@partpage}%
+   \end{scope}%
+}
+\newcommand*\beautybook@timelineboxrail[2]{%
+   \edef\beautybook@railx{\the\dimexpr\kvtcb@left@rule+\kvtcb@boxsep+\csuse{kvtcb@left#1}+#2\relax}%
+   \draw[beautybook timeline rail] (\beautybook@railx,0pt) --
+      (\beautybook@railx,\dimexpr\tcb@height-\tcb@h@padtitle\relax);
+}
+
+% Write the page from the label box itself so it ships with the node, even
+% when TeX breaks between \item and the first line.
+% 页码随节点盒输出，避免条目第一行换页时提前记录到前一页。
+\newcommand*\beautybook@timelineitem[1]{%
+   \beautybook@timelinebullet{i#1}{%
+      \label{item-#1}%
+      \beautybook@timelineref{item-#1}%
+      \beautybook@timelineconnect{i#1}%
+   }%
+}
+\newcommand*\beautybook@timelineconnect[1]{%
+   \edef\beautybook@here{\beautybook@timelineslot{item-\BeautybookCurrentList\arabic{mycnt}}{\beautybook@timelinecolumns}}%
+   \ifnum\beautybook@here>0\relax
+      \edef\beautybook@previtem{\number\numexpr\value{mycnt}-1\relax}%
+      \edef\beautybook@prevpage{\beautybook@timelineslot{item-\BeautybookCurrentList\beautybook@previtem}{\beautybook@timelinecolumns}}%
+      \ifnum\beautybook@prevpage=\beautybook@here\relax
+         \edef\beautybook@prevnode{i\BeautybookCurrentList\beautybook@previtem}%
+         \ifcsname pgf@sh@ns@\beautybook@prevnode\endcsname
+            \expandafter\draw\expandafter[\drawoptionsconn] (\beautybook@prevnode) -- (#1);
+         \fi
+      \else
+         \ifnum\beautybook@prevpage>0\relax
+            \beautybook@timelinetail{#1}{north}%
+         \fi
+      \fi
+      \ifnum\beautybook@timelineslot{item-\BeautybookCurrentList\number\numexpr\value{mycnt}+1\relax}
+         {\beautybook@timelinecolumns}>\beautybook@here\relax
+         \beautybook@timelinetail{#1}{south}%
+      \fi
+   \fi
+}
+\newcommand*\beautybook@timelinetail[2]{%
+   \ifx\beautybook@timelinebox\@empty
+      \expandafter\draw\expandafter[\drawoptionsshort] (#1) -- (#1 |- current page text area.#2);
+   \else
+      \csgdef{beautybook@timelinecrossing@\beautybook@timelinebox}{}%
+      \expandafter\draw\expandafter[\drawoptionsshort] (#1) -- (#1 |- current page.#2);
+   \fi
+}
+
+\newcommand*\beautybook@timelinebullet[2]{%
+   \raisebox{0pt}[0pt][0pt]{%
+      \begin{tikzpicture}[remember picture,baseline=-\beautybook@timelinehalfslot]
+         % Keep the established label footprint while allowing a wider ring.
+         % 保留原有标签占位，圆环可略宽于原标记。
+         \path[use as bounding box]
+            (-\beautybook@timelinehalfslot,-\beautybook@timelinehalfslot)
+            rectangle (\beautybook@timelinehalfslot,\beautybook@timelinehalfslot);
+         \begin{scope}[overlay]
+            \node[circle,inner sep=0pt,outer sep=0pt,minimum size=8.7pt] (#1) at (0,0) {};
+            #2%
+            \fill[white,fill opacity=.20] (0,0) circle (4.34pt);
+            \draw[BeautybookTimelineRing,line width=.58pt,draw opacity=.92] (0,0) circle (4.34pt);
+            \draw[white,line width=.32pt,draw opacity=.58] (0,0) circle (3.77pt);
+            \shade[ball color=BeautybookTimelineSteel] (0,0) circle (2.58pt);
+         \end{scope}
+      \end{tikzpicture}%
+   }%
+}
+\newcommand{\linkedlist}[1]{\beautybook@timelinebullet{#1}{}}
+\newcommand{\lgtimelineitem}{%
+   \stepcounter{mycnt}%
+   \item[\beautybook@timelineitem{\BeautybookCurrentList\arabic{mycnt}}]%
+}
+
+\NewDocumentEnvironment{lg@timeline}{m}{%
+   \edef\BeautybookRestoreList{%
+      \noexpand\setcounter{mycnt}{\arabic{mycnt}}}%
+   \stepcounter{mylist}%
+   \edef\BeautybookCurrentList{\BeautybookListKey}%
+   \edef\beautybook@timelinecolumns{\if@twocolumn2\else1\fi}%
+   \begin{itemize}[align=right,#1]%
+   \ifx\beautybook@timelinebox\@empty\else
+      \csgdef{beautybook@timelineused@\beautybook@timelinebox}{}%
+   \fi
+}{%
+   \if@filesw
+      \ifnum\value{mycnt}>1\relax
+         \dimen@=\dimexpr\@totalleftmargin+\itemindent-\labelsep-\beautybook@timelinehalfslot\relax
+         \ifdim\labelwidth<2\dimexpr\beautybook@timelinehalfslot\relax
+            \advance\dimen@\dimexpr2\dimexpr\beautybook@timelinehalfslot\relax-\labelwidth\relax
+         \fi
+         \immediate\write\@auxout{\string\BeautybookTimelineSpan
+            {\BeautybookCurrentList}{\arabic{mycnt}}{\beautybook@timelinebox}%
+            {\beautybook@timelinelayer}{\the\dimen@}{\beautybook@timelinecolumns}}%
+      \fi
+   \fi
+   \if@newlist\global\@newlistfalse\fi
+   \end{itemize}\BeautybookRestoreList%
+}
+
+% Match Beautybook's native list spacing while leaving ordinary itemize alone.
+% 时间线按 Beautybook 的原生间距排版，设置仅作用于当前列表。
+\NewDocumentEnvironment{lgtimeline}{O{}}{%
+   \lg@timeline{font=\upshape,itemsep=1pt,parsep=1pt,#1}%
+}{\endlg@timeline}
+\endinput

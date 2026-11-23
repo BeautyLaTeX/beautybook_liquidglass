@@ -1,0 +1,17 @@
+.DS_Store
+Thumbs.db
+.texbuild/
+build/
+.venv/
+__pycache__/
+*.pyc
+*.aux
+*.log
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.lgr
+*.lgi.tex
+/*.pdf
+!/液态玻璃使用说明.pdf
+/液态玻璃升级记录.md

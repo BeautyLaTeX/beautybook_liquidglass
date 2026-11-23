@@ -14,6 +14,8 @@
   sidebar=on, % on/off
 }
 \usepackage{stys/beautybook-cnsettings} % 中文配置文件
+\usepackage{stys/beautybook-liquidglass} % LiquidGlass content materials
+\BeautyGlassDefault[lg radius={3mm, northwest=5pt}]
 \begin{document}
 \thispagestyle{empty}
 \title{课题调研与选题探讨}
@@ -321,7 +323,10 @@ $$
 
 因此，$\ker \bar{\partial}$的正交补是$\operatorname{Im} \bar{\partial}^*$，这意味着任何不属于$\ker \bar{\partial}$的形式必然可以由$\bar{\partial}^*$生成。这是理解Hodge分解和复流形上形式的分析中非常重要的一
 
-那么如何由$w\in \operatorname{Dom} \bar\partial^*_k$得到$w_1\in \ker \bar\partial$呢？
+\begin{proposition}
+    那么如何由$w\in \operatorname{Dom} \bar\partial^*_k$得到$w_1\in \ker \bar\partial$呢？
+\end{proposition}
+    
 \begin{solution}
     在处理这个问题时，我们需要利用Hodge分解的性质以及$\bar{\partial}$和$\bar{\partial}^*$的相关性质。我们的目标是将一个给定的形式$w \in \operatorname{Dom} \bar{\partial}^*_k$分解，以找到它在$\ker \bar{\partial}$中的分量$w_1$。
 

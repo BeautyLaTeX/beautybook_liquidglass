@@ -1,0 +1,150 @@
+%% Local beautybook adapter for LiquidGlass. SPDX-License-Identifier: MIT
+\NeedsTeXFormat{LaTeX2e}[2022-06-01]
+\ProvidesPackage{stys/beautybook-liquidglass}[2026/11/23 v1.6.0 beautybook material integration]
+\RequirePackage{liquidglass}
+% Public adapter controls / 接入层的公共入口
+\newif\ifbeautyglassactive
+\beautyglassactivefalse
+\newcommand\BeautyGlassOn{\global\beautyglassactivetrue}
+\newcommand\BeautyGlassOff{\global\beautyglassactivefalse}
+\newcommand\BeautyGlassBackground[1]{\glassbackground{#1}}
+\newcommand\BeautyGlassSetup[1]{\glasssetup{#1}}
+
+% Beautybook reading material / Beautybook 阅读材质
+\def\beautyglass@darktheme{dark}
+\newcommand*\beautyglass@tone[2]{\ifx\lg@theme\beautyglass@darktheme#2\else#1\fi}
+\tcbset{beautybook prepared image fit/.code={\def\lg@imagefit{\beautyglass@tone{stretch}{cover}}}}
+\newcommand\BeautyGlassDefault[1][]{%
+  \glassbackground{@silver}%
+  \glasssetup{lg material=reading,beautybook prepared image fit,
+    lg opacity=\beautyglass@tone{0}{.07},
+    lg lift=cloud,#1}%
+}
+% Compatibility for old documents: the former name selects the same material.
+\newcommand\BeautyGlassStudio[1][]{\BeautyGlassDefault[#1]}
+\BeautyGlassDefault
+\makeatletter
+% Native ornate frame integration / 原生中式外框接入
+\newif\ifbeautyglass@fancy
+\AtBeginEnvironment{fancybox}{\beautyglass@fancytrue}
+\def\beautyglass@makeysclip#1{%
+  \expandafter\let\csname beautyglass@ysclip@#1\expandafter\endcsname\csname ys@frame@#1outer\endcsname
+  \expandafter\patchcmd\csname beautyglass@ysclip@#1\endcsname
+    {\path[draw=framegolden,fill=framegray,fill opacity=\ys@frame@fill@opacity,line width=\ys@frame@linewidth]}
+    {\path[clip]}
+    {}{\PackageError{beautybook-liquidglass}{Cannot preserve native ys clipping}{The template ys frame definition changed.}}%
+  \expandafter\let\csname beautyglass@ysinvclip@#1\expandafter\endcsname\csname ys@frame@#1outer\endcsname
+  \expandafter\patchcmd\csname beautyglass@ysinvclip@#1\endcsname
+    {\path[draw=framegolden,fill=framegray,fill opacity=\ys@frame@fill@opacity,line width=\ys@frame@linewidth]}
+    {\path[tcb@invclip]}
+    {}{\PackageError{beautybook-liquidglass}{Cannot preserve native ys inverse clipping}{The template ys frame definition changed.}}%
+}
+\beautyglass@makeysclip{unbroken}
+\beautyglass@makeysclip{first}
+\beautyglass@makeysclip{middle}
+\beautyglass@makeysclip{last}
+% Scope clipping only while the outer ornamental pane is painted. Children
+% keep their own ordinary frame paths and edge light.
+\let\beautyglass@basepaint\lg@paint
+\def\beautyglass@fancypaint{%
+  \ifnum\c@tcblayer=1\relax
+    \iflg@painted\else
+      \begingroup
+        \def\tcb@clip@frame{\csname beautyglass@ysclip@\tcb@split@state\endcsname}%
+        \def\tcb@invclip@frame{\csname beautyglass@ysinvclip@\tcb@split@state\endcsname}%
+        \let\lg@edgepaint\@empty
+        \beautyglass@basepaint
+      \endgroup
+      \lg@paintedtrue
+    \fi
+  \else
+    \beautyglass@basepaint
+  \fi
+}
+% The native radius drives the outline, ornaments and matching glass clip.
+% 原生半径同时定位外框、角饰和底图裁切。
+\def\beautyglass@preserveys{%
+  \let\tcb@interior@code\beautyglass@nativeinterior
+  \let\tcb@interiortitled@code\beautyglass@nativeinteriortitled
+  \let\lg@paint\beautyglass@fancypaint
+}
+
+% Ordinary titles lost their opaque native bar when glass was applied.
+% The title buffer is authoritative here; hasTitle is populated later by tcolorbox.
+% Restore template title colours after the material selects its theme.
+% 材质主题应用后恢复模板标题的配色规则。
+\def\beautyglass@restorenativetitle{%
+  \tcbset{coltitle=BeautyGlassOriginalTitle}%
+  \ifdefstring{\lg@theme}{light}{%
+    \ifbeautyglass@fancy\else
+      \ifx\kvtcb@title\@empty\else
+        \extractcolorspec{BeautyGlassOriginalTitle}\beautyglass@titlespec
+        \expandafter\convertcolorspec\beautyglass@titlespec{rgb}\beautyglass@titlergb
+        \extractcolorspec{white}\beautyglass@whitespec
+        \expandafter\convertcolorspec\beautyglass@whitespec{rgb}\beautyglass@whitergb
+        \ifx\beautyglass@titlergb\beautyglass@whitergb
+          \tcbset{coltitle=LGInk}%
+        \fi
+      \fi
+    \fi
+  }{}%
+}
+
+% This marker belongs to the enclosing box group. tcolorbox gives each
+% continuation its own number, so its number is not a logical-box identity.
+% Reapplying the full style while drawing a continuation would also reset
+% its native first/middle/last clipping path to an unbroken rounded frame.
+\newif\ifbeautyglass@applied
+\newif\ifbeautyglass@nativedark
+% This is a local template adapter, not a global patch in the generic package.
+% Apply after every environment has finished selecting its native style.
+\appto\tcb@afteroptions@hook{%
+  \ifbeautyglassactive
+    \ifnum\c@tcblayer=1\relax
+      \ifbeautyglass@applied\else
+        \beautyglass@appliedtrue
+        \edef\beautyglass@owner{\thetcolorboxnumber}%
+        \ifx\beautyglass@owner\lg@owner\else
+          \colorlet{BeautyGlassOriginalTitle}{tcbcoltitle}%
+          \colorlet{BeautyGlassOriginalUpper}{tcbcolupper}%
+          \colorlet{BeautyGlassOriginalLower}{tcbcollower}%
+          % Listing environments render through an internal tcolorbox; their
+          % current environment name is no longer the public listing name.
+          \beautyglass@nativedarkfalse
+          \@ifundefinedcolor{MacDText}{}{%
+              \extractcolorspec{BeautyGlassOriginalUpper}\beautyglass@upperspec
+              \expandafter\convertcolorspec\beautyglass@upperspec{rgb}\beautyglass@upperrgb
+              \extractcolorspec{MacDText}\beautyglass@darkspec
+              \expandafter\convertcolorspec\beautyglass@darkspec{rgb}\beautyglass@darkrgb
+              \ifx\beautyglass@upperrgb\beautyglass@darkrgb
+                  \beautyglass@nativedarktrue
+              \fi
+          }%
+          \ifbeautyglass@fancy
+              \let\beautyglass@nativeinterior\tcb@interior@code
+              \let\beautyglass@nativeinteriortitled\tcb@interiortitled@code
+          \fi
+          \let\beautyglass@localradius\lg@radiusoptions
+          \tcbset{no underlay,no shadow,liquid glass}%
+          \ifx\beautyglass@localradius\@empty\else
+            \expandafter\lg@setradius\expandafter{\beautyglass@localradius}%
+          \fi
+          \ifbeautyglass@fancy\beautyglass@preserveys\fi
+          \ifbeautyglass@nativedark\tcbset{lg theme=dark}\fi
+          \beautyglass@restorenativetitle
+          \ifdefstring{\lg@theme}{light}{%
+              \tcbset{colupper=BeautyGlassOriginalUpper,collower=BeautyGlassOriginalLower}%
+          }{}%
+        \fi
+      \fi
+    \fi
+  \fi
+}
+% Matter boundaries / 正文开关
+\apptocmd{\mainmatter}{\BeautyGlassOn}{}{\PackageError{beautybook-liquidglass}{Cannot attach mainmatter switch}{Use BeautyGlassOn before book content.}}
+\pretocmd{\frontmatter}{\BeautyGlassOff}{}{}
+\pretocmd{\backmatter}{\BeautyGlassOff}{}{}
+\pretocmd{\makecover}{\BeautyGlassOff}{}{}
+\pretocmd{\makebottomcover}{\BeautyGlassOff}{}{}
+\makeatother
+\endinput

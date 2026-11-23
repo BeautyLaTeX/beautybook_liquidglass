@@ -8,9 +8,10 @@
 \beautybookstyle={
   cover-choose=en, % en/cn/enfig/birkar
   math-font=fourier, % plain/mtpro2/fourier
-  sidebar=off, % on/off
+  sidebar=on, % on/off
 }
 \usepackage{stys/beautybook-ensettings}
+\usepackage{stys/beautybook-liquidglass} % LiquidGlass content materials
 \newcommand{\Wedge}[1][]{\tikz\path [draw,line width=1pt] (0,0)--++(4pt,12pt) node[right,font=\scriptsize] {#1} --++(4pt,-12pt);}
 \newtheorem{note}{Note}
 \begin{document}
@@ -102,7 +103,9 @@ Here is a comprehensive list of the academic papers that I have perused.
 
 \partabstract{}\part{Hodge Structure}
 
-
+\begin{conjecture*}
+test
+\end{conjecture*}
 
 
 \printbibliography[heading=bibintoc,title={Bibliography}]\printindex\thispagestyle{empty}

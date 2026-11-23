@@ -1,0 +1,23 @@
+{
+  "origin": "Original Liquidglass studio scene, second-page Conversion rate backdrop",
+  "original_source": "doc/liquidglass-studio.tex",
+  "original_source_sha256": "ba2ad964f0cf57fa2598ba13f449b87077298563306d69520ff429697bb35935",
+  "derivation": "Render exact original page lighting and rear paper geometry, removing rear text and data bars. Capture RGB under logical pane 3 before material filters. No foreground text, grain, blur, refraction, tint or extra sheen is baked into this input.",
+  "dpi": 300,
+  "pixels": [
+    1111,
+    461
+  ],
+  "sha256": "d327fbf8f51b0e1345dda8da6c18b3d3dd19a53012e50e3154dfc2666a091420",
+  "comparison_processed_original_scene_vs_text_free_rgb_mean_absolute_difference": [
+    0.28146068402935737,
+    0.23835398724254203,
+    0.21902255301452053
+  ],
+  "recommended_profile": {
+    "lg luminous": true,
+    "lg image fit": "stretch",
+    "lg shadow color": "#506F7D"
+  },
+  "scope": "Reusable logical-box backdrop, not a page background or a pixel crop containing text."
+}

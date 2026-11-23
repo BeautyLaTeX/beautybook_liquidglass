@@ -4,20 +4,20 @@
 \subsubsection{Some notations}
 
 \begin{definition}[][transgressive]
-    An element $\alpha\in H^{p,q}_{\bdd}(F)$  is called transgressive if there is a representative $\alpha\in \mA^{p,q}_{\bdd}(F)$ which extends to a form $\widetilde{\alpha}\in \mA^{p,q}_{\bdd}(F)$ such that $\bd\widetilde{\alpha}=\pi^*\beta$ for some $\bd$-closed form $\beta\in \mA^{p,q+1}_{\bdd}(B)$.
+    An element $\alpha\in H^{p,q}_{\bdd}(F)$  is called transgressive if there is a representative $\alpha\in \calA^{p,q}_{\bdd}(F)$ which extends to a form $\widetilde{\alpha}\in \calA^{p,q}_{\bdd}(F)$ such that $\bd\widetilde{\alpha}=\pi^*\beta$ for some $\bd$-closed form $\beta\in \calA^{p,q+1}_{\bdd}(B)$.
 \end{definition}
 
 The following are all the settings in this paper.
 \begin{enumerate}
-    \item $i^*\colon \mA^{p,q}(M)\to\mA^{p,q}(N)$ is surjective, which induces a short exact sequence for the pair $(M,N)$ of complexes 
+    \item $i^*\colon \calA^{p,q}(M)\to\calA^{p,q}(N)$ is surjective, which induces a short exact sequence for the pair $(M,N)$ of complexes 
     \[
-        0\to\mA^{p,\bullet}(M,N)\to \mA^{p,\bullet}(M)\stackrel{i^*}{\to}\mA^{p,\bullet}(N)\to 0
+        0\to\calA^{p,\bullet}(M,N)\to \calA^{p,\bullet}(M)\stackrel{i^*}{\to}\calA^{p,\bullet}(N)\to 0
     \]
      and a long exact sequence
      \[
         \cdots\to H^{p,\bullet}_{\bdd} (M,N)\to H^{p,\bullet}_{\bdd} (M) \to H^{p,\bullet}_{\bdd} (N)\to \cdots.
      \]
-     !Note that here $i\colon N\hookrightarrow M$ is an inclusion, which is naturally injective. Associating with the above condition, the exactness at $\mA^{p,\bullet}(M)$ is clear.
+     !Note that here $i\colon N\hookrightarrow M$ is an inclusion, which is naturally injective. Associating with the above condition, the exactness at $\calA^{p,\bullet}(M)$ is clear.
     \item 
 \end{enumerate}
 
@@ -29,14 +29,14 @@ The following are all the settings in this paper.
 
 
 \begin{example}[][Blow-up with the center at a point]
-    Consider the situation of line bundle $\mO(-1)$ over projective manifold $\bP^n$, which is given as the \textbf{incidence variety} 
+    Consider the situation of line bundle $\calO(-1)$ over projective manifold $\bP^n$, which is given as the \textbf{incidence variety} 
     \[
         \begin{tikzcd}
-\bP^n \ar[r,-Stealth,hook,"\pi^*"]\ar[d,-Stealth]&\mO(-1)\ar[d,-Stealth,"\sigma"]\\ 
+\bP^n \ar[r,-Stealth,hook,"\pi^*"]\ar[d,-Stealth]&\calO(-1)\ar[d,-Stealth,"\sigma"]\\ 
 \{0\}\ar[r,-Stealth,hook,"\operatorname*{id}"]&\bC^{n+1}
         \end{tikzcd}
     \]
-    Recall that the set $\mO(-1)\subset \bP^n\times \bC^{n+1}$ that consists of all pairs $(\ell,z)\in\bP^n\times \bC^{n+1}$ with $z\in\ell$ forms in a natural way a holomorphic line bundle over $\bP^n$ by Huybrechets,Prop 2.2.6.  First, we have the projective $\pi\colon \mO(-1)\to\bP^n$, and the fibres of $\mO(-1)$ is $\pi^{-1}(\ell) , \ell\in\bP^n$. Without loss generality, let $\bP^n=\bigcup_{i=0}^n U_i$ be the standard open covering, which induces the fact that $\ell$ must belong to one of $U_i$. Here we just set $\ell\in U_i$ for conviniance. Then we have the \textit{trivialization of $\mO(-1)$ over $U_i$}, which is given by 
+    Recall that the set $\calO(-1)\subset \bP^n\times \bC^{n+1}$ that consists of all pairs $(\ell,z)\in\bP^n\times \bC^{n+1}$ with $z\in\ell$ forms in a natural way a holomorphic line bundle over $\bP^n$ by Huybrechets,Prop 2.2.6.  First, we have the projective $\pi\colon \calO(-1)\to\bP^n$, and the fibres of $\calO(-1)$ is $\pi^{-1}(\ell) , \ell\in\bP^n$. Without loss generality, let $\bP^n=\bigcup_{i=0}^n U_i$ be the standard open covering, which induces the fact that $\ell$ must belong to one of $U_i$. Here we just set $\ell\in U_i$ for conviniance. Then we have the \textit{trivialization of $\calO(-1)$ over $U_i$}, which is given by 
     \[
         \begin{aligned}
                    \psi_i\colon \pi^{-1}(U_i)&\cong U_i\times \bC\\ 
@@ -54,16 +54,16 @@ In other words, the transition maps can also be written as
 (\ell,w)=(\ell,z_i) &\mapsto (\ell,\frac{z_j}{z_i}w)=(\ell,z_j)\\ 
 \psi_i(\ell) &\to \psi_j(\ell)
 \end{align*}
-Now we can easily see that the fibre of $\mO(-1)$ over $\ell\in\bP^n$ is naturally isomorphic to $\ell$ itself. Let us consider the other canonical projection $\sigma\colon \mO(-1)\to \bC^{n+1}$. Theirs' relations are the following diagram.
+Now we can easily see that the fibre of $\calO(-1)$ over $\ell\in\bP^n$ is naturally isomorphic to $\ell$ itself. Let us consider the other canonical projection $\sigma\colon \calO(-1)\to \bC^{n+1}$. Theirs' relations are the following diagram.
 \[
     \begin{tikzcd}
-        &\mO(-1)\subset \bP^n\times \bC^{n+1}\dlar[-Stealth,"\pi"]\drar[-Stealth,"\sigma"]&\\
+        &\calO(-1)\subset \bP^n\times \bC^{n+1}\dlar[-Stealth,"\pi"]\drar[-Stealth,"\sigma"]&\\
         \bP^n=\bigcup_{i=0}^n U_i && \bC^{n+1}
     \end{tikzcd}
 \]
 By the definition of the projective bundle, we obtain that all line $\ell\in \bP^n$ pass through the origin point, which means the pre-image of $\sigma$ at $0$ is just the whole projective space $\bP^n$, i.e., $\sigma^{-1}(0)=\bP^n$. 
 
-Thus we construct a \textit{Blow-up} $\sigma\colon \operatorname{Bl}_0 (\bC^{n+1})\to\bC^{n+1}$ of $\bC^{n+1}$ along the zero dimensional submanifold $\{0\}$, which by definition is a holomorphic line bundle $\mO(-1)$ with the center at $0$ . Note that $E:=\operatorname{Bl}_0 (\bC^{n+1})=\bP^n$ is the exceptional divisor.
+Thus we construct a \textit{Blow-up} $\sigma\colon \operatorname{Bl}_0 (\bC^{n+1})\to\bC^{n+1}$ of $\bC^{n+1}$ along the zero dimensional submanifold $\{0\}$, which by definition is a holomorphic line bundle $\calO(-1)$ with the center at $0$ . Note that $E:=\operatorname{Bl}_0 (\bC^{n+1})=\bP^n$ is the exceptional divisor.
 \end{example}
 
 \begin{example}[][Blow-up along a linear subspace][exam:blow-up at subspace]
@@ -163,20 +163,20 @@ It is straightforward to check that $\hat{\phi}(x, z)$ is indeed contained in th
 \subsection{Dolbeault blow-up formula}
 
 \begin{lemma}
-    There exists an open neighborhood $\mU$ of $Y$ in $X$ such that $i^*\colon \mA^{p,q}(\mU)\to\mA^{p,q}(Y)$ is surjective, where $i:=\iota|_{\mU}\colon Y\hookrightarrow\mU $  is the inclusion and 
+    There exists an open neighborhood $\calU$ of $Y$ in $X$ such that $i^*\colon \calA^{p,q}(\calU)\to\calA^{p,q}(Y)$ is surjective, where $i:=\iota|_{\calU}\colon Y\hookrightarrow\calU $  is the inclusion and 
     \[
-        \mA^{p,\bullet}(X,Y):=\{\alpha\in\mA^{p,\bullet}(X)\mid i^*\alpha=0\}=\ker (i^*).
+        \calA^{p,\bullet}(X,Y):=\{\alpha\in\calA^{p,\bullet}(X)\mid i^*\alpha=0\}=\ker (i^*).
     \]
 \end{lemma}
 
 \begin{lemma}[][][lem:sur]
 
-    The pullback $\iota^*\colon \mA^{p,q}(X)\to\mA^{p,q}(Y)$ is surjective. Here $\iota\colon Y\hookrightarrow X$  is an inclusion.
+    The pullback $\iota^*\colon \calA^{p,q}(X)\to\calA^{p,q}(Y)$ is surjective. Here $\iota\colon Y\hookrightarrow X$  is an inclusion.
 \end{lemma}
 Thus $j$ is an inclusion, which is naturally injective and $\iota^*$ is surjective by lemma   \ref{lem:sur}. Now we then obtains a short exact sequence for the pair $(X,Y)$ of complexes
  \[
     \begin{tikzcd}
-        0\rar[-Stealth]  & \mA^{p,\bullet}(X,Y) \rar[-Stealth,"j"] & \mA^{p,\bullet}(X)\rar[-Stealth,"\iota^*"] &  \mA^{p,\bullet}(Y) \rar[-Stealth]  &0.
+        0\rar[-Stealth]  & \calA^{p,\bullet}(X,Y) \rar[-Stealth,"j"] & \calA^{p,\bullet}(X)\rar[-Stealth,"\iota^*"] &  \calA^{p,\bullet}(Y) \rar[-Stealth]  &0.
     \end{tikzcd}
  \]
 
@@ -185,7 +185,7 @@ The blow-up $\widehat{X}$ of $x$ with the center $Z$ is a projective morphism $\
     \pi\colon \widehat{X}- E\stackrel{\cong}{\tikz\draw[thick,-Stealth] (0,0)--+(1cm,0);} X-Z
 \]
 is a biholomorphism by \cite[Proposition 2.5.3]{Huybrechts2004ComplexGA}. Here 
-\[E:= \pi^{-1}(Z)\cong \bP(\mN_{Z/X})\]
+\[E:= \pi^{-1}(Z)\cong \bP(\calN_{Z/X})\]
 is the \textit{exceptional divisor} of the blow-up. Then one has the following blow-up diagram
 \[
     \begin{tikzcd}
@@ -196,8 +196,8 @@ is the \textit{exceptional divisor} of the blow-up. Then one has the following b
 , which then induces a natural commutative diagram for the short exact sequences of complexes 
 \[
     \begin{tikzcd}
-        0\rar[-Stealth]  & \mA^{p,\bullet}(X,Z) \dar[-Stealth,"\pi^*"]\rar[-Stealth] & \mA^{p,\bullet}(X)\dar[-Stealth,"\pi^*"]\rar[-Stealth] &  \mA^{p,\bullet}(Z) \rar[-Stealth] \dar[-Stealth,"\pi_E^*"] &0\\
-        0\rar[-Stealth]  & \mA^{p,\bullet}(\widehat{X},E) \rar[-Stealth] & \mA^{p,\bullet}(\widehat{X})\rar[-Stealth] &  \mA^{p,\bullet}(E) \rar[-Stealth]  &0
+        0\rar[-Stealth]  & \calA^{p,\bullet}(X,Z) \dar[-Stealth,"\pi^*"]\rar[-Stealth] & \calA^{p,\bullet}(X)\dar[-Stealth,"\pi^*"]\rar[-Stealth] &  \calA^{p,\bullet}(Z) \rar[-Stealth] \dar[-Stealth,"\pi_E^*"] &0\\
+        0\rar[-Stealth]  & \calA^{p,\bullet}(\widehat{X},E) \rar[-Stealth] & \calA^{p,\bullet}(\widehat{X})\rar[-Stealth] &  \calA^{p,\bullet}(E) \rar[-Stealth]  &0
     \end{tikzcd}
 \]
 and a commutative diagram for the long exact sequences

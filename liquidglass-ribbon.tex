@@ -1,0 +1,82 @@
+%% Shared Beautybook ribbon paths. SPDX-License-Identifier: MIT
+\ifdefined\lg@ribbontop\expandafter\endinput\fi
+\usetikzlibrary{calc,shadows,shadows.blur}
+\pgfdeclarelayer{lgRibbonUnder}
+\newdimen\lg@ribbonwidth
+\newcommand*\lg@ribbonlimit{1.2\linewidth}
+
+% Install the fold layer only in the current tcolorbox picture.
+% 折边层只添加到当前盒子的图层表。
+\newcommand*\lg@ribbonlayers{%
+  \edef\lg@layerorder{lgRibbonUnder,\pgf@layerlist}%
+  \expandafter\pgfsetlayers\expandafter{\lg@layerorder}%
+  \def\lg@ribbonlayer{lgRibbonUnder}%
+}
+\newcommand*\lg@ribbontop[2]{
+   \def\rad{7pt}%
+   \begin{scope}%
+   \path[fill=#2, blur shadow={shadow blur steps=10,shadow xshift=-1pt, shadow yshift=-1pt,shadow blur radius=1.5pt,shadow opacity=35}]
+   node[append after command={
+      ([xshift=-1.5*\rad]thmname.north west)
+      to[out=0,in=180,looseness=1]
+      ([xshift=2.5*\rad]thmname.south west) --
+      ([xshift=-2.5*\rad]thmname.south east)
+      to[out=0,in=180,looseness=1]
+      ([xshift=1.5*\rad]thmname.north east)
+      --cycle
+      },
+      text=white,
+      font=\bfseries,
+      align=center,
+      inner ysep=1.5mm,
+      inner xsep=1.2em,%
+      minimum height=0.7cm,
+      right
+   ] (thmname) at ([xshift=\rad,yshift=-.7*\rad]frame.north west)
+   {
+      \hspace*{3pt}#1\space
+   };
+   \pgfextractx{\lg@ribbonwidth}{%
+      \pgfpointdiff
+      {\pgfpointanchor{thmname}{west}}
+      {\pgfpointanchor{thmname}{east}}}
+   \begin{pgfonlayer}{\lg@ribbonlayer}
+      \shade[left color=#2!20, right color=#2!80!black]
+      ([shift={(-.5*\rad,-\rad)}]thmname.north west)
+      to[out=180, in=0] ++(-2*\rad, \rad)%
+      -| +(5*\rad, -\rad)%
+      -- cycle;
+      \ifdim\lg@ribbonwidth>\lg@ribbonlimit
+         \shade[right color=#2!20, left color=#2!80!black]
+         ([xshift=0.4*\rad,yshift=-1*\rad]thmname.north east)
+         to[out=0, in=180] ++(2*\rad, \rad)
+         -| +(-5*\rad,-\rad)
+         -- cycle;
+      \else
+         \shade[right color=#2!20, left color=#2!80!black]
+         ([xshift=1.2*\rad]thmname.north east)
+         to[out=0, in=180] ++(2*\rad, -\rad)
+         -| +(-5*\rad,\rad)
+         -- cycle;
+      \fi
+   \end{pgfonlayer}
+\end{scope}
+}
+\newcommand*\lg@ribbonfoot[1]{
+   \def\tlen{1.5cm}
+   \def\Rad{3.5pt}
+   \def\theight{0.5cm}
+   \def\rad{7pt}%
+   \begin{scope}%
+      \path[fill=#1,drop shadow={opacity=0.3,shadow xshift=.3pt}]
+      ([xshift=-2*\rad,yshift=-5pt]frame.south east) coordinate (SE)  to[out=0,in=180] +(4*\rad,5pt+\theight) --([shift={(-\tlen+4*\rad,5pt+\theight)}]SE) to[out=180,in=0] +(-4*\rad,-5pt-\theight) --cycle;
+      \begin{pgfonlayer}{\lg@ribbonlayer}
+         \shade[left color=#1!20, right color=#1!80!black]
+         ([shift={(-1.35*\tlen+\Rad,-5pt)}]frame.south east)
+         to[out=180, in=0] ++(-2*\rad, \rad)%
+         -| +(5*\rad, -\rad)%
+         -- cycle;
+      \end{pgfonlayer}
+   \end{scope}
+}
+\endinput

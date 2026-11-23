@@ -428,7 +428,7 @@ Thereby, one transform the original proposition into the equivalent case $p=0$.
 
 Next, let $\alpha \in \mathcal{A}^{0, q}(U)$ be $\bar{\partial}$-closed (i.e. $\bar{\partial}\alpha=0$ ) and write $\alpha=\sum_I f_I \,\mathrm{d}\bar{z}_I$. \textcolor[rgb]{0.75,0.16,0.44}{\textit{\textbf{Choose $k$ minimal such that no $d \bar{z}_i$ occurs in this sum for $i>k$. Thus, we can write $\alpha=\alpha_1 \wedge \mathrm{d}\bar{z}_k+\alpha_2$ , with $\alpha_2$  free of $\mathrm{d}\bar{z}_i$ for $i \geq k$.}}} 
 \begin{note}[\textbf{Notes for the decomposition of $\alpha$}]
-As $\alpha\in\mA^{0,q}(U)=\bigwedge^{0,q}(U)=\bC^n\otimes \bigwedge^{q}(T^* U)^{0,1}$ , set the basis of $\bigwedge^{q}(T^* U)^{0,1}$ is $\mathrm{d}\bar{z}_1,\cdots,\mathrm{d}\bar{z}_n$, then one has
+As $\alpha\in\calA^{0,q}(U)=\bigwedge^{0,q}(U)=\bC^n\otimes \bigwedge^{q}(T^* U)^{0,1}$ , set the basis of $\bigwedge^{q}(T^* U)^{0,1}$ is $\mathrm{d}\bar{z}_1,\cdots,\mathrm{d}\bar{z}_n$, then one has
 \[
   \alpha=\sum_{i=1}^{n}f_i\mathrm{d}\bar{z}_i.
 \]
@@ -442,7 +442,7 @@ g_I(z)=\frac{1}{2 \pi i} \int_{B_{\varepsilon_k}} \frac{f_I\left(z_1, \ldots, z_
 \end{align*}
 satisfies $\partial g_I/\partial \bar{z}_k=f_I$ on $B_{\varepsilon_k} \subset \mathbb{C}$. Moreover, the function \textcolor[rgb]{0.75,0.16,0.44}{\textit{\textbf{$g_I$ is holomorphic in $z_{k+1}, \ldots$, $ z_n$ and differentiable in the other variables}}}.
 
-Set {\color{DarkBlue}\[\gamma:=\sum_{k \in I} g_I \,\mathrm{d}\bar{z}_{I \backslash\{k\}}\in \mA^{0,q-1}(B_{\varepsilon_k}).\]}
+Set {\color{DarkBlue}\[\gamma:=\sum_{k \in I} g_I \,\mathrm{d}\bar{z}_{I \backslash\{k\}}\in \calA^{0,q-1}(B_{\varepsilon_k}).\]}
  Then 
  {\color[rgb]{0.75,0.16,0.44}
  \begin{align*}
@@ -602,25 +602,31 @@ of \textbf{toposes} is called direct image, i.e. $f_* (E_1)$ is a direct image o
 %   \end{figure}
 \begin{figure}[h]
   \centering
-  \begin{tikzpicture}
-  \node (a1) at (90:1cm) {$E$};
-  \node (a2) at (270:1cm) {$M\times \bC^r$};
-  \node[right] (a3) at ([xshift=3cm]a1) {$M$};
-  \draw[->] (a1) --node[left] {$\psi$} (a2) ;
-  \draw[->] (a2) --node[below right] {$\mathrm{Pr}_1$} (a3) ;
-  \draw[->] (a1) --node[above right,pos=0.3] {$\pi$} (a3) ;
-  %%
-  \coordinate (c) at ([,xshift=0.5cm,yshift=-1cm]a3);
-  \draw[->] (c) --node[above,font=\bfseries\itshape] {Locally} ++(1.2cm,0);
-  %%
-  \node (b1) at ([xshift=8cm]a1) {$\pi^{-1}(x)$ $\subset \pi^{-1}(U_i)\subset E$};
-  \node (b2) at ([xshift=8cm]a2) {$\bC^r$ $ \subset U_i \times \bC^r$};
-  \node[right] (b3) at ([xshift=4cm]b1) {$U_i\subset M (=\bigcup U_i)$};
-  \draw[->] ([xshift=1.1cm]b1.south west) --node[left] {$\psi_i (x)$} node[right] {$\cong$}([xshift=-1.15cm]b2.north) ;
-  \draw[->] ([xshift=-1.78cm]b1.south east) --node[right] {$\psi_i$} node[left] {$\cong$} ([xshift=0.5cm]b2.north) ;
-  \draw[->] (b2) --node[below right] {$\mathrm{Pr}_1$} (b3.south west) ;
-  \draw[->] (b1) --node[above right,pos=0.3] {$\pi$} (b3) ;
-\end{tikzpicture}
+  \begin{tikzpicture}[remember picture,>=Stealth]
+    % 左边部分
+    \node (a1) at (90:1cm) {$E$};
+    \node (a2) at (270:1cm) {$M \times \mathbb{C}^r$};
+    \node[right] (a3) at ([xshift=3cm]a1) {$M$};
+    \draw[->] (a1) -- node[left] {$\psi$} (a2);
+    \draw[->] (a2) -- node[below right] {$\mathrm{Pr}_1$} (a3);
+    \draw[->] (a1) -- node[above right, pos=0.3] {$\pi$} (a3);
+    
+    % 局部标记
+    \coordinate (c) at ([xshift=0.5cm, yshift=-1cm]a3);
+    \draw[->] (c) -- node[above, font=\bfseries\itshape,pos=0.45] {Locally} node[below, font=\bfseries\itshape,pos=0.45]{as} ++(1.8cm,0);
+    
+    % 右边部分
+    \node (b1) at ([xshift=8cm]a1) {$\tikzmarknode{x11}{\pi^{-1}(x)} \subset \tikzmarknode{x12}{\pi^{-1}(U_i) \subset E}$};
+    % 仅为 \mathbb{C}^r 和 U_i \times \mathbb{C}^r 创建 tikzmark
+    \node (b2) at ([xshift=8cm]a2) {$\tikzmarknode{x21}{\mathbb{C}^r} \quad\subset\quad \tikzmarknode{x22}{U_i \times \mathbb{C}^r}$};
+    \node[right] (b3) at ([xshift=4cm]b1) {$U_i \subset M (=\bigcup U_i)$};
+    
+    % 绘制箭头
+    \draw[->] (b1) -- node[above right, pos=0.3] {$\pi$} (b3);
+    \draw[->] ([xshift=0cm]x11) -- node[left] {$\psi_i(x)$} node[right] {$\cong$} ([xshift=0cm]x21);
+    \draw[->] ([xshift=0cm]x12) -- node[right] {$\psi_i$} node[left] {$\cong$} ([xshift=0cm]x22);
+    \draw[->] (b2.north east) -- node[below right] {$\mathrm{Pr}_1$} (b3.south west);
+  \end{tikzpicture}
 \caption{The structure of the holomorphic vector bundle.}
 \label{fig: vector bundle's structure}
 \end{figure}

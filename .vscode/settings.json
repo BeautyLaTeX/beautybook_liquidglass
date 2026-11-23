@@ -1,22 +1,44 @@
 {
-  "workbench.colorCustomizations": {
-    "activityBar.activeBackground": "#2f7c47",
-    "activityBar.background": "#2f7c47",
-    "activityBar.foreground": "#e7e7e7",
-    "activityBar.inactiveForeground": "#e7e7e799",
-    "activityBarBadge.background": "#422c74",
-    "activityBarBadge.foreground": "#e7e7e7",
-    "commandCenter.border": "#e7e7e799",
-    "sash.hoverBorder": "#2f7c47",
-    "statusBar.background": "#215732",
-    "statusBar.foreground": "#e7e7e7",
-    "statusBarItem.hoverBackground": "#2f7c47",
-    "statusBarItem.remoteBackground": "#215732",
-    "statusBarItem.remoteForeground": "#e7e7e7",
-    "titleBar.activeBackground": "#215732",
-    "titleBar.activeForeground": "#e7e7e7",
-    "titleBar.inactiveBackground": "#21573299",
-    "titleBar.inactiveForeground": "#e7e7e799"
-  },
-  "peacock.color": "#215732"
+  "latex-workshop.latex.tools": [
+    {
+      "name": "beautybook-auto",
+      "command": "/bin/sh",
+      "args": [
+        "%WORKSPACE_FOLDER%/build.command",
+        "%DOC_EXT%",
+        "--no-pause",
+        "--no-open",
+        "--sync-next-to-pdf"
+      ],
+      "cwd": "%DIR%"
+    },
+    {
+      "name": "liquidglass-1.6",
+      "command": "/opt/homebrew/bin/python3",
+      "args": [
+        "%WORKSPACE_FOLDER%/lgbuild.py",
+        "%DOC_EXT%"
+      ],
+      "cwd": "%DIR%"
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "Beautybook 自动编译（普通与玻璃）",
+      "tools": [
+        "beautybook-auto"
+      ]
+    },
+    {
+      "name": "LiquidGlass 1.6",
+      "tools": [
+        "liquidglass-1.6"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipe.default": "Beautybook 自动编译（普通与玻璃）",
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.outDir": "%DIR%",
+  "latex-workshop.latex.auxDir": "%DIR%/build",
+  "latex-workshop.view.pdf.viewer": "tab"
 }

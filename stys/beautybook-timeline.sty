@@ -1,0 +1,7 @@
+%% Beautybook names for the shared LiquidGlass timeline.
+\NeedsTeXFormat{LaTeX2e}[2022-06-01]
+\ProvidesPackage{stys/beautybook-timeline}[2026/11/23 Beautybook timeline aliases]
+\RequirePackage{liquidglass-timeline}
+\newenvironment{myitemize}{\lg@timeline{}}{\endlg@timeline}
+\NewCommandCopy\myitem\lgtimelineitem
+\endinput

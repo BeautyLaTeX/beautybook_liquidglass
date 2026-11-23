@@ -1,0 +1,15 @@
+{
+  "description": "Unlettered rendered surface from the first compatibility-test glass card; reused byte-for-byte.",
+  "source_artwork": "colorfield.png",
+  "source_artwork_pixels": [1600, 1372],
+  "source_region_approx": [375, 247, 1225, 582],
+  "page_mm": [160, 210],
+  "card_mm": {"x": 15, "width": 130, "height": 51.381647, "bottom_y": 121.026741},
+  "render_dpi": 144,
+  "original_material": {"blur": 2.4, "opacity": 0.30, "grain": 0.012, "refraction": 0.35, "saturation": 1.08, "contrast": 7},
+  "prepared_surface": "default.png",
+  "prepared_surface_pixels": [737, 291],
+  "prepared_surface_sha256": "0b9bbdc67a1b8366f2cdd0b071d07509fcb63e9650487cc80b51613803a3efe9",
+  "apply_preset": "lg reference",
+  "notes": "The rectangle coordinates locate the original artwork region approximately. The provided prepared PNG is the exact rendered surface and contains no TeX foreground, title, border or shadow. Stretch once over each logical box and slice continuously across pages."
+}

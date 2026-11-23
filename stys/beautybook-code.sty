@@ -1,0 +1,649 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{stys/beautybook-code}[2026/11/19 Beautybook code listings]
+% Native code windows, syntax highlighting and line numbers.
+% 本模块维护代码窗口、语法高亮和行号。LiquidGlass 接入层可替换窗口底图。
+\RequirePackage{minted}
+\RequirePackage{adjustbox}
+\RequirePackage{fvextra}
+\RequirePackage[most]{tcolorbox}
+\tcbuselibrary{skins,breakable,minted}
+% =========================================================
+% Window dimensions / 窗口尺寸
+% =========================================================
+\newlength{\MacWindowWidth}
+\newlength{\MacRadius}
+\newlength{\MacBarHeight}
+
+\newlength{\MacLightRadius}
+\newlength{\MacLightSep}
+\newlength{\MacLightLeft}
+
+\newlength{\MacPanelInsetX}
+\newlength{\MacPanelTopGap}
+\newlength{\MacPanelBottomGap}
+
+\newlength{\MacListingLeft}
+\newlength{\MacListingRight}
+
+\setlength{\MacWindowWidth}{.9\textwidth}
+\setlength{\MacRadius}{3mm}
+\setlength{\MacBarHeight}{7.4mm}
+
+\setlength{\MacLightRadius}{4.4pt}
+\setlength{\MacLightSep}{12.4pt}
+\setlength{\MacLightLeft}{2.2mm}
+
+\setlength{\MacPanelInsetX}{2.5mm}
+\setlength{\MacPanelTopGap}{2.2mm}
+\setlength{\MacPanelBottomGap}{2.8mm}
+
+\setlength{\MacListingLeft}{10mm}
+\setlength{\MacListingRight}{6.2mm}
+
+% =========================================================
+% Shared palette / 共用配色
+% =========================================================
+\definecolor{MacRed}{HTML}{ff5c5f}
+\definecolor{MacYellow}{HTML}{fac800}
+\definecolor{MacGreen}{HTML}{35c759}
+\definecolor{MacGlyph}{RGB}{70,72,76}
+\definecolor{MacLineNo}{RGB}{145,154,166}
+
+% =========================================================
+% Light palette / 浅色配色
+% =========================================================
+\definecolor{MacLWinTop}{RGB}{246,248,252}
+\definecolor{MacLWinUpper}{RGB}{239,243,249}
+\definecolor{MacLWinMid}{RGB}{232,237,244}
+\definecolor{MacLWinBot}{RGB}{224,230,239}
+
+\definecolor{MacLBarTop}{RGB}{250,251,253}
+\definecolor{MacLBarUpper}{RGB}{243,246,250}
+\definecolor{MacLBarMid}{RGB}{235,239,245}
+\definecolor{MacLBarBot}{RGB}{216,222,231}
+
+\definecolor{MacLPanelTop}{RGB}{252,253,255}
+\definecolor{MacLPanelUpper}{RGB}{248,250,253}
+\definecolor{MacLPanelMid}{RGB}{244,247,251}
+\definecolor{MacLPanelBot}{RGB}{239,243,248}
+
+\definecolor{MacLOuter}{RGB}{172,179,190}
+\definecolor{MacLHair}{RGB}{160,167,178}
+\definecolor{MacLGutterLine}{RGB}{216,221,229}
+\definecolor{MacLTitle}{RGB}{32,34,38}
+
+% =========================================================
+% Dark palette / 深色配色
+% =========================================================
+\definecolor{MacDWinTop}{RGB}{48,56,66}
+\definecolor{MacDWinUpper}{RGB}{45,53,63}
+\definecolor{MacDWinMid}{RGB}{41,49,58}
+\definecolor{MacDWinBot}{RGB}{38,46,54}
+
+\definecolor{MacDBarTop}{RGB}{67,74,86}
+\definecolor{MacDBarUpper}{RGB}{58,66,78}
+\definecolor{MacDBarMid}{RGB}{50,59,70}
+\definecolor{MacDBarBot}{RGB}{42,51,62}
+
+\definecolor{MacDPanelTop}{RGB}{43,52,61}
+\definecolor{MacDPanelUpper}{RGB}{40,49,58}
+\definecolor{MacDPanelMid}{RGB}{37,45,54}
+\definecolor{MacDPanelBot}{RGB}{33,41,49}
+
+\definecolor{MacDOuter}{RGB}{112,122,134}
+\definecolor{MacDHair}{RGB}{98,108,120}
+\definecolor{MacDGutterLine}{RGB}{95,132,118}
+\definecolor{MacDTitle}{RGB}{240,243,248}
+\definecolor{MacDText}{RGB}{221,227,234}
+
+% 保留颜色定义，但深色主体里不再大面积使用，避免形成色带
+\definecolor{MacDCyanGlow}{RGB}{74,204,220}
+\definecolor{MacDBlueGlow}{RGB}{98,130,255}
+\definecolor{MacDPurpleGlow}{RGB}{158,121,255}
+
+
+% =========================================================
+% Paint ramps / 绘制渐变
+% =========================================================
+\pgfdeclareverticalshading{MacLightWindowGlass}{100bp}{
+  color(0bp)=(MacLWinBot);
+  color(24bp)=(MacLWinMid);
+  color(62bp)=(MacLWinUpper);
+  color(92bp)=(MacLWinTop);
+  color(100bp)=(MacLWinTop)
+}
+
+\pgfdeclareverticalshading{MacLightBarGlass}{100bp}{
+  color(0bp)=(MacLBarBot);
+  color(30bp)=(MacLBarMid);
+  color(68bp)=(MacLBarUpper);
+  color(94bp)=(MacLBarTop);
+  color(100bp)=(MacLBarTop)
+}
+
+\pgfdeclareverticalshading{MacLightPanelGlass}{100bp}{
+  color(0bp)=(MacLPanelBot);
+  color(34bp)=(MacLPanelMid);
+  color(72bp)=(MacLPanelUpper);
+  color(100bp)=(MacLPanelTop)
+}
+
+\pgfdeclareverticalshading{MacDarkWindowGlass}{100bp}{
+  color(0bp)=(MacDWinBot);
+  color(38bp)=(MacDWinMid);
+  color(74bp)=(MacDWinUpper);
+  color(100bp)=(MacDWinTop)
+}
+
+\pgfdeclareverticalshading{MacDarkBarGlass}{100bp}{
+  color(0bp)=(MacDBarBot);
+  color(32bp)=(MacDBarMid);
+  color(70bp)=(MacDBarUpper);
+  color(100bp)=(MacDBarTop)
+}
+
+\pgfdeclareverticalshading{MacDarkPanelGlass}{100bp}{
+  color(0bp)=(MacDPanelBot);
+  color(46bp)=(MacDPanelMid);
+  color(84bp)=(MacDPanelUpper);
+  color(100bp)=(MacDPanelTop)
+}
+
+
+% =========================================================
+% Listing defaults / 代码排版默认值
+% =========================================================
+\setminted{
+    fontsize=\small,
+    breaklines=true,
+    breakanywhere=true,
+    autogobble=true,
+    linenos=true,
+    numberblanklines=false,
+    numbersep=7pt,
+    tabsize=4,
+    ignorelexererrors=true,
+    breakautoindent=true,
+    breakindent=1.2em
+}
+
+\fvset{
+    breaklines=true,
+    breakanywhere=true
+}
+
+\renewcommand{\theFancyVerbLine}{%
+    \sffamily\color{MacLineNo}\scriptsize
+    \arabic{FancyVerbLine}%
+}
+
+% =========================================================
+% Window controls / 窗口按钮
+% =========================================================
+\newif\ifMacButtonMarks
+\MacButtonMarksfalse
+% 如果想显示 x / - / 全屏符号，取消下一行注释：
+% \MacButtonMarkstrue
+
+\newcommand{\MacLight}[3]{%
+  \begin{scope}[shift={(#1,0pt)},x=\MacLightRadius,y=\MacLightRadius]%
+    \shade[
+        shading=radial,
+        inner color=white!58!#2,
+        outer color=#2!94!black
+    ] (0,0) circle[radius=1];%
+    \fill[white,opacity=.50] (-.30,.34) circle[radius=.24];%
+    \draw[white,opacity=.42,line width=.28pt]
+        (-.56,.58) arc[start angle=140,end angle=40,radius=.72];%
+    \draw[black,opacity=.16,line width=.32pt]
+        (0,0) circle[radius=1];%
+    \ifMacButtonMarks #3\fi%
+  \end{scope}%
+}
+
+\newcommand{\MacTrafficLights}{%
+  \begin{tikzpicture}[baseline=-.55ex]%
+    \MacLight{0pt}{MacRed}{%
+        \draw[MacGlyph,opacity=1,line width=.52pt,line cap=round]
+            (-.32,-.32)--(.32,.32)
+            (-.32,.32)--(.32,-.32);%
+    }%
+    \MacLight{\MacLightSep}{MacYellow}{%
+        \draw[MacGlyph,opacity=1,line width=.68pt,line cap=round]
+            (-.40,0)--(.40,0);%
+    }%
+    \MacLight{\dimexpr2\MacLightSep\relax}{MacGreen}{%
+        \draw[MacGlyph,opacity=1,line width=.48pt,line cap=round]
+            (-.40,.32)--(.32,-.40)
+            (.32,-.40)--(.08,-.40)
+            (.32,-.40)--(.32,-.16)
+            (.40,-.32)--(-.32,.40)
+            (-.32,.40)--(-.08,.40)
+            (-.32,.40)--(-.32,.16);%
+    }%
+  \end{tikzpicture}%
+}
+
+% A page cut has an open rim and clips the inset panel at the same edge.
+% 分页断口沿用 tcolorbox 的裁切，内层面板也延伸至断口。
+\newcommand*\beautybook@macframeclip{%
+  \ifdefstring{\tcb@split@state}{unbroken}{%
+    \clip[rounded corners=\MacRadius]
+      (frame.south west) rectangle (frame.north east);%
+  }{\tcb@clip@frame}%
+}
+
+\newcommand*\beautybook@macpanelnodes{%
+  \def\beautybook@macpaneltop{\dimexpr-\MacBarHeight-\MacPanelTopGap\relax}%
+  \def\beautybook@macpanelbottom{\MacPanelBottomGap}%
+  \ifdefstring{\tcb@split@state}{first}{\def\beautybook@macpanelbottom{-5mm}}{}%
+  \ifdefstring{\tcb@split@state}{middle}{%
+    \def\beautybook@macpaneltop{5mm}%
+    \def\beautybook@macpanelbottom{-5mm}%
+  }{}%
+  \ifdefstring{\tcb@split@state}{last}{\def\beautybook@macpaneltop{5mm}}{}%
+  \coordinate (MacPanelNW) at
+    ([xshift=\MacPanelInsetX,yshift=\beautybook@macpaneltop]frame.north west);%
+  \coordinate (MacPanelSE) at
+    ([xshift=-\MacPanelInsetX,yshift=\beautybook@macpanelbottom]frame.south east);%
+  \coordinate (MacPanelNE) at (MacPanelNW -| MacPanelSE);%
+  \coordinate (MacPanelSW) at (MacPanelNW |- MacPanelSE);%
+}
+
+% Keep the two original rim strokes on a full window. For split pieces,
+% tcolorbox uses the same corner states as the glass backdrop and shadow.
+% 整盒使用原有的双线边缘，分页片段则与底图和阴影共用圆角规则。
+\newcommand*\beautybook@macrim[4]{%
+  \ifdefstring{\tcb@split@state}{unbroken}{%
+    \draw[rounded corners=\MacRadius,#1,opacity=#2,line width=#3]
+      ([xshift=#4,yshift=#4]frame.south west) rectangle
+      ([xshift=-#4,yshift=-#4]frame.north east);%
+  }{%
+    \csname tcb@border@\tcb@split@state\endcsname{#3}{#4-(#3)/2}{draw=#1,draw opacity=#2}%
+  }%
+}
+\newcommand*\beautybook@maclightrim{%
+  \beautybook@macrim{white}{.72}{.70pt}{.35pt}%
+  \beautybook@macrim{MacLOuter}{.36}{.40pt}{.12pt}%
+}
+\newcommand*\beautybook@macdarkrim{%
+  \beautybook@macrim{white}{.12}{.72pt}{.35pt}%
+  \beautybook@macrim{MacDOuter}{.32}{.42pt}{.12pt}%
+}
+
+% The title depth belongs only to the first piece. Use a real break padding
+% so tcolorbox can include the space in its split-height calculation.
+% 标题栏只占首段空间，续段留白参与原生分页高度计算。
+\tcbset{beautybook code breaks/.style={
+  breakable,bottomsep at break=0mm,
+  pad after break={\MacPanelTopGap+2.4mm},
+}}
+
+% =========================================================
+% Light window body / 浅色窗口主体
+% =========================================================
+\newcommand{\MacLightGlassBody}{%
+  \begin{scope}%
+    \beautybook@macframeclip
+
+    \shade[
+        shading=MacLightWindowGlass,
+        opacity=.985
+    ]
+        (frame.south west) rectangle (frame.north east);%
+
+    % 外层顶部窄高光，控制得更弱，避免上半部分发白
+    \path[fill=white,opacity=.115]
+        ([xshift=4mm,yshift=-3.0mm]frame.north west)
+        .. controls ([xshift=.25\linewidth,yshift=-.9mm]frame.north west)
+                 and ([xshift=.56\linewidth,yshift=-8.0mm]frame.north west)
+         .. ([xshift=.90\linewidth,yshift=-3.9mm]frame.north west)
+        -- ([xshift=.90\linewidth,yshift=-7.2mm]frame.north west)
+        .. controls ([xshift=.56\linewidth,yshift=-10.0mm]frame.north west)
+                 and ([xshift=.24\linewidth,yshift=-5.8mm]frame.north west)
+         .. ([xshift=4mm,yshift=-6.5mm]frame.north west)
+        -- cycle;%
+
+    % 底部只做极轻压暗，不做明显色块
+    \path[fill=black,opacity=.014]
+        ([yshift=9mm]frame.south west) rectangle (frame.south east);%
+
+    \beautybook@macpanelnodes
+
+    % 面板阴影：非常轻，避免右下角脏色块
+    \path[
+        rounded corners=3.5mm,
+        fill=black,
+        opacity=.020
+    ]
+        ([xshift=.35mm,yshift=-.45mm]MacPanelSW)
+        rectangle
+        ([xshift=.35mm,yshift=-.45mm]MacPanelNE);%
+
+    % 代码区玻璃层：只保留平滑纵向渐变
+    \begin{scope}%
+      \clip[rounded corners=3.5mm]
+          (MacPanelSW) rectangle (MacPanelNE);%
+
+      \shade[
+          shading=MacLightPanelGlass,
+          opacity=.88
+      ]
+          (MacPanelSW) rectangle (MacPanelNE);%
+
+      % 顶部极淡釉面，不使用局部大椭圆，避免产生奇怪色差
+      \path[fill=white,opacity=.055]
+          (MacPanelNW) rectangle ([yshift=-3.4mm]MacPanelNE);%
+    \end{scope}%
+
+    % 代码面板边缘
+    \draw[
+        rounded corners=3.5mm,
+        white,
+        opacity=.58,
+        line width=.55pt
+    ]
+        (MacPanelSW) rectangle (MacPanelNE);%
+
+    \draw[
+        rounded corners=3.5mm,
+        black,
+        opacity=.038,
+        line width=.34pt
+    ]
+        (MacPanelSW) rectangle (MacPanelNE);%
+  \end{scope}%
+}
+
+% =========================================================
+% Light title bar and rim / 浅色标题栏与边缘
+% =========================================================
+\newcommand{\MacLightChrome}[1]{%
+  \begin{scope}%
+    \beautybook@macframeclip
+
+    \shade[
+        shading=MacLightBarGlass,
+        opacity=.988
+    ]
+        (frame.north west)
+        rectangle
+        ([yshift={-\MacBarHeight}]frame.north east);%
+
+    \draw[white,opacity=.80,line width=.60pt]
+        ([xshift=\MacRadius,yshift=-.55mm]frame.north west)
+        --
+        ([xshift=-\MacRadius,yshift=-.55mm]frame.north east);%
+
+    \draw[MacLHair,opacity=.24,line width=.32pt]
+        ([yshift={-\MacBarHeight}]frame.north west)
+        --
+        ([yshift={-\MacBarHeight}]frame.north east);%
+  \end{scope}%
+
+  \node[anchor=west,inner sep=0pt]
+      at ([xshift=\MacLightLeft,
+           yshift={\dimexpr-\MacBarHeight/2\relax}]
+           frame.north west)
+      {\MacTrafficLights};%
+
+  \node[anchor=center,inner sep=0pt,text=MacLTitle]
+      at ([yshift={\dimexpr-\MacBarHeight/2\relax}]frame.north)
+      {%
+        \adjustbox{
+            max width={\dimexpr\MacWindowWidth-60mm\relax},
+            max height=4.8mm
+        }{%
+            \sffamily\bfseries\normalsize\strut #1%
+        }%
+      };%
+
+  \beautybook@maclightrim
+}
+
+% =========================================================
+% Dark window body / 深色窗口主体
+% =========================================================
+\newcommand{\MacDarkGlassBody}{%
+  \begin{scope}%
+    \beautybook@macframeclip
+
+    % 主体：只使用非常平滑的深色纵向渐变
+    \shade[
+        shading=MacDarkWindowGlass,
+        opacity=.996
+    ]
+        (frame.south west) rectangle (frame.north east);%
+
+    % 底部极轻压暗，只增加厚度感，不制造明显色块
+    \path[fill=black,opacity=.026]
+        ([yshift=8mm]frame.south west) rectangle (frame.south east);%
+
+    \beautybook@macpanelnodes
+
+    % 面板阴影：降低透明度，避免顶部附近出现重影
+    \path[
+        rounded corners=3.5mm,
+        fill=black,
+        opacity=.105
+    ]
+        ([xshift=.40mm,yshift=-.50mm]MacPanelSW)
+        rectangle
+        ([xshift=.40mm,yshift=-.50mm]MacPanelNE);%
+
+    % 代码区玻璃层
+    \begin{scope}%
+      \clip[rounded corners=3.5mm]
+          (MacPanelSW) rectangle (MacPanelNE);%
+
+      % 面板本体：提高不透明度，让颜色更均匀
+      \shade[
+          shading=MacDarkPanelGlass,
+          opacity=.965
+      ]
+          (MacPanelSW) rectangle (MacPanelNE);%
+
+      % 底部极轻暗压，连续过渡
+      \path[fill=black,opacity=.022]
+          ([yshift=7mm]MacPanelSW) rectangle (MacPanelSE);%
+    \end{scope}%
+
+    % 面板边缘：保留玻璃边界，但降低上缘白线存在感
+    \draw[
+        rounded corners=3.5mm,
+        white,
+        opacity=.095,
+        line width=.52pt
+    ]
+        (MacPanelSW) rectangle (MacPanelNE);%
+
+    \draw[
+        rounded corners=3.5mm,
+        black,
+        opacity=.20,
+        line width=.38pt
+    ]
+        (MacPanelSW) rectangle (MacPanelNE);%
+  \end{scope}%
+}
+
+
+% =========================================================
+% Dark title bar and rim / 深色标题栏与边缘
+% =========================================================
+\newcommand{\MacDarkChrome}[1]{%
+  \begin{scope}%
+    \beautybook@macframeclip
+
+    \shade[
+        shading=MacDarkBarGlass,
+        opacity=.995
+    ]
+        (frame.north west)
+        rectangle
+        ([yshift={-\MacBarHeight}]frame.north east);%
+
+    \draw[white,opacity=.095,line width=.60pt]
+        ([xshift=\MacRadius,yshift=-.55mm]frame.north west)
+        --
+        ([xshift=-\MacRadius,yshift=-.55mm]frame.north east);%
+
+    \draw[black,opacity=.14,line width=.28pt]
+        ([yshift={-\MacBarHeight}]frame.north west)
+        --
+        ([yshift={-\MacBarHeight}]frame.north east);%
+
+  \end{scope}%
+
+  \node[anchor=west,inner sep=0pt]
+      at ([xshift=\MacLightLeft,
+           yshift={\dimexpr-\MacBarHeight/2\relax}]
+           frame.north west)
+      {\MacTrafficLights};%
+
+  \node[anchor=center,inner sep=0pt,text=MacDTitle]
+      at ([yshift={\dimexpr-\MacBarHeight/2\relax}]frame.north)
+      {%
+        \adjustbox{
+            max width={\dimexpr\MacWindowWidth-60mm\relax},
+            max height=4.8mm
+        }{%
+            \sffamily\bfseries\normalsize\strut #1%
+        }%
+      };%
+
+  \beautybook@macdarkrim
+}
+
+% =========================================================
+% Light listing environment / 浅色代码环境
+%
+% 用法：
+% \begin{maccode}[局部 minted 选项]{语言}{标题}
+% ...
+% \end{maccode}
+% =========================================================
+\newtcblisting{maccode}[3][]{%
+  enhanced jigsaw,
+  beautybook code breaks,
+  listing only,
+  listing engine=minted,
+  minted language=#2,
+  minted options={
+      style=xcode,
+      fontsize=\small,
+      frame=leftline,
+      framesep=5pt,
+      framerule=.36pt,
+      rulecolor=\color{MacLGutterLine},
+      linenos=true,
+      numberblanklines=false,
+      numbersep=4pt,
+      breaklines=true,
+      breakanywhere=true,
+      autogobble=true,
+      tabsize=4,
+      ignorelexererrors=true,
+      breakautoindent=true,
+      breakindent=1.2em,
+      breaksymbolleft={},
+      #1
+  },
+  width=\MacWindowWidth,
+  center,
+  boxrule=0pt,
+  frame hidden,
+  colback=white,
+  opacityback=0,
+  arc=\MacRadius,
+  outer arc=\MacRadius,
+  boxsep=0pt,
+  top={\dimexpr\MacBarHeight+\MacPanelTopGap+2.4mm\relax},
+  bottom=5.0mm,
+  left=\MacListingLeft,
+  right=\MacListingRight,
+  before skip=9pt,
+  after skip=16pt,
+  fuzzy shadow={0mm}{-.45mm}{.7mm}{.08mm}{white!88},
+  fuzzy shadow={0mm}{2.2mm}{5.0mm}{.12mm}{black!7},
+  fuzzy shadow={0mm}{7mm}{18mm}{.20mm}{black!3},
+  underlay unbroken={\MacLightGlassBody},
+  underlay first={\MacLightGlassBody},
+  underlay middle={\MacLightGlassBody},
+  underlay last={\MacLightGlassBody},
+  overlay unbroken={\MacLightChrome{#3}},
+  overlay first={\MacLightChrome{#3}},
+  overlay middle={\beautybook@maclightrim},
+  overlay last={\beautybook@maclightrim}
+}
+
+% =========================================================
+% Dark listing environment / 深色代码环境
+%
+% 用法：
+% \begin{macdarkcode}[局部 minted 选项]{语言}{标题}
+% ...
+% \end{macdarkcode}
+% =========================================================
+\newtcblisting{macdarkcode}[3][]{%
+  enhanced jigsaw,
+  beautybook code breaks,
+  listing only,
+  listing engine=minted,
+  minted language=#2,
+  minted options={
+      style=monokai,
+      fontsize=\small,
+      frame=leftline,
+      framesep=5pt,
+      framerule=.40pt,
+      rulecolor=\color{MacDGutterLine},
+      linenos=true,
+      numberblanklines=false,
+      numbersep=4pt,
+      breaklines=true,
+      breakanywhere=true,
+      autogobble=true,
+      tabsize=4,
+      ignorelexererrors=true,
+      breakautoindent=true,
+      breakindent=1.2em,
+      breaksymbolleft={},
+      #1
+  },
+  width=\MacWindowWidth,
+  center,
+  boxrule=0pt,
+  frame hidden,
+  colback=black,
+  opacityback=0,
+  coltext=MacDText,
+  arc=\MacRadius,
+  outer arc=\MacRadius,
+  boxsep=0pt,
+  top={\dimexpr\MacBarHeight+\MacPanelTopGap+2.4mm\relax},
+  bottom=5.0mm,
+  left=\MacListingLeft,
+  right=\MacListingRight,
+  before skip=9pt,
+  after skip=16pt,
+  fuzzy shadow={0mm}{-.4mm}{.7mm}{.06mm}{white!10},
+  fuzzy shadow={0mm}{2.5mm}{7mm}{.20mm}{black!38},
+  fuzzy shadow={0mm}{8mm}{20mm}{.28mm}{black!22},
+  underlay unbroken={\MacDarkGlassBody},
+  underlay first={\MacDarkGlassBody},
+  underlay middle={\MacDarkGlassBody},
+  underlay last={\MacDarkGlassBody},
+  overlay unbroken={\MacDarkChrome{#3}},
+  overlay first={\MacDarkChrome{#3}},
+  overlay middle={\beautybook@macdarkrim},
+  overlay last={\beautybook@macdarkrim}
+}
+
+
+
+
+% Final shared line-number style / 全局行号的最终样式
+\renewcommand{\theFancyVerbLine}{\sffamily\textcolor[RGB]{176,176,176}{\footnotesize \oldstylenums{\arabic{FancyVerbLine}}}}
+\definecolor{back}{RGB}{248,248,248} % 代码背景色
+\endinput
