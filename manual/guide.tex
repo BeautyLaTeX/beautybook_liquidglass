@@ -18,7 +18,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\sffamily\color{GuideTeal}\textbf{LIQUIDGLASS}}
-\fancyhead[R]{\small\sffamily\color{GuideGray}使用说明\enspace /\enspace 1.6.2}
+\fancyhead[R]{\small\sffamily\color{GuideGray}使用说明\enspace /\enspace 1.6.3}
 \fancyfoot[R]{\small\color{GuideTeal}\thepage}
 \renewcommand\headrulewidth{.3pt}
 \ctexset{
@@ -63,7 +63,7 @@
 \begin{document}
 \thispagestyle{empty}
 \vspace*{5mm}
-{\large\sffamily\bfseries\color{GuideTeal} LIQUIDGLASS\hfill 1.6.2}\par
+{\large\sffamily\bfseries\color{GuideTeal} LIQUIDGLASS\hfill 1.6.3}\par
 {\fontsize{30pt}{37pt}\selectfont\bfseries 液态玻璃使用说明}\par
 {\large\color{GuideGray} 从第一个磨砂盒，到逐项调光和圆角}\par
 \vspace{3mm}
@@ -368,7 +368,7 @@ python3 lgbuild.py example.tex --engine xelatex --dpi 175
 \Code{lgbuild.py} & 可从命令行直接调用，分辨率 \Code{--dpi} 范围 72–300，默认 144。
 \Code{--bibliography} 与 \Code{--index} 接受 \Code{auto}、\Code{none}，控制相应辅助工具。 \\
 两个入口通用 & \Code{--engine} 取 \Code{auto}、\Code{xelatex}、\Code{lualatex}、\Code{pdflatex}。
-\Code{--shell-escape}、\Code{--no-shell-escape} 显式切换外部命令权限。默认关闭，只有文档确实需要时才开。 \\
+\Code{--shell-escape}、\Code{--restricted-shell-escape} 和 \Code{--no-shell-escape} 分别选择完整、受限或关闭外部命令权限。默认关闭。 \\
 环境变量 & \Code{LIQUIDGLASS_PYTHON} 可指定启动器使用的 Python。
 \Code{LIQUIDGLASS_DRIVER} 可指定启动器使用的构建器路径。
 \Code{LIQUIDGLASS_ASSETS} 可为构建器指定内置素材目录。 \\

@@ -36,7 +36,8 @@ try:
 except ImportError:
     raise SystemExit("LiquidGlass needs Pillow: python3 -m pip install Pillow")
 
-VERSION = "1.6.2"
+VERSION = "1.6.3"
+SHELL_FLAGS = {False: "-no-shell-escape", "restricted": "-shell-restricted", True: "-shell-escape"}
 SP_PER_INCH = 65536 * 72.27
 INPUT_LIMIT = 128 * 1024 * 1024
 PIXEL_LIMIT = 120_000_000
@@ -307,21 +308,25 @@ def clamped_crop(image, box):
     xe = max(xs + 1, min(image.width, right))
     ye = max(ys + 1, min(image.height, bottom))
     crop = image.crop((xs, ys, xe, ye))
-    padl, padt = max(0, -left), max(0, -top)
-    padr, padb = max(0, right - image.width), max(0, bottom - image.height)
+    # A rectangle entirely outside the image still samples its nearest edge.
+    padl = min(width - crop.width, max(0, xs - left))
+    padt = min(height - crop.height, max(0, ys - top))
+    padr = width - crop.width - padl
+    padb = height - crop.height - padt
     if not any((padl, padt, padr, padb)):
         return crop
     # Transform clamps all sample coordinates to the nearest source edge.
     output = Image.new("RGB", (width, height))
-    output.paste(crop, (xs - left, ys - top))
+    output.paste(crop, (padl, padt))
     if padl:
-        output.paste(crop.crop((0, 0, 1, crop.height)).resize((padl, crop.height)), (0, ys - top))
+        output.paste(crop.crop((0, 0, 1, crop.height)).resize((padl, crop.height)), (0, padt))
     if padr:
-        output.paste(crop.crop((crop.width - 1, 0, crop.width, crop.height)).resize((padr, crop.height)), (width - padr, ys - top))
+        output.paste(crop.crop((crop.width - 1, 0, crop.width, crop.height)).resize((padr, crop.height)), (width - padr, padt))
     if padt:
-        output.paste(output.crop((0, ys - top, width, ys - top + 1)).resize((width, padt)), (0, 0))
+        output.paste(output.crop((0, padt, width, padt + 1)).resize((width, padt)), (0, 0))
     if padb:
-        output.paste(output.crop((0, ye - top - 1, width, ye - top)).resize((width, padb)), (0, height - padb))
+        edge = padt + crop.height
+        output.paste(output.crop((0, edge - 1, width, edge)).resize((width, padb)), (0, edge))
     return output
 
 
@@ -371,7 +376,7 @@ def contrast_guard(image, pane):
     if pane.contrast > maximum + 1e-6:
         raise BuildError(f"Requested contrast {pane.contrast:g}:1 is impossible with {pane.mode} text (maximum {maximum:.2f}:1)")
     before = min_contrast(image, pane.mode)
-    if before + .005 >= pane.contrast:
+    if before >= pane.contrast:
         return image, before, 0.0
     # A conservative channel bound guarantees every pixel passes, including
     # saturated photographs.  The final report also measures actual luminance.
@@ -383,7 +388,8 @@ def contrast_guard(image, pane):
         blend = max(0, (target - lowest) / max(1, 255 - lowest))
         table = [min(255, math.ceil(n + (255 - n) * blend)) for n in range(256)]
     else:
-        target = max(0, target - 1)
+        if LINEAR[target] > required:
+            target = max(0, target - 1)
         highest = max(pair[1] for pair in extrema)
         blend = max(0, 1 - target / max(1, highest))
         table = [max(0, math.floor(n * (1 - blend))) for n in range(256)]
@@ -503,7 +509,7 @@ def run_compile(engine, main, job, output, capture, console_file, env=None, shel
     expression += r"\PassOptionsToPackage{noautomatic}{imakeidx}"
     expression += r"\input{" + main.name + "}"
     args = [engine, "-interaction=nonstopmode", "-halt-on-error", "-file-line-error",
-            "-synctex=1", "-recorder", "-shell-escape" if shell_escape else "-no-shell-escape",
+            "-synctex=1", "-recorder", SHELL_FLAGS[shell_escape],
             f"-jobname={job}", f"-output-directory={output}", expression]
     process_env = dict(env or os.environ)
     # Both old styles and other normal TeX inputs see the staged map before any
@@ -830,7 +836,8 @@ def staged_build(args, main, workspace):
     bibliography = getattr(args, "bibliography", "auto")
     index = getattr(args, "index", "auto")
     auxiliary_state = {}
-    print(f"LiquidGlass {VERSION}: capturing {main.name} ({engine_name}, shell escape {'enabled' if shell_escape else 'disabled'})", flush=True)
+    shell_label = {True: "enabled", False: "disabled", "restricted": "restricted"}[shell_escape]
+    print(f"LiquidGlass {VERSION}: capturing {main.name} ({engine_name}, shell escape {shell_label})", flush=True)
     for attempt in range(1, 4):
         previous = None
         for capture_pass in range(6):
@@ -849,6 +856,7 @@ def staged_build(args, main, workspace):
                                             materials, args.dpi, package)
         atomic_bytes(final / f"{job}.lgi.tex", mapping.encode("utf-8"))
         copy_references(capture, final, job)
+        print("Composing final PDF", flush=True)
         run_compile(engine, main, job, final, False, workspace / "final.console.txt", env, shell_escape)
         final_records = parse_records(final / f"{job}.lgr", final / f"{job}.aux")
         if panes == final_records:
@@ -912,6 +920,8 @@ def main():
     external = parser.add_mutually_exclusive_group()
     external.add_argument("--shell-escape", dest="shell_escape", action="store_true", help="Explicitly allow external TeX commands required by this document")
     external.add_argument("--no-shell-escape", dest="shell_escape", action="store_false", help="Disable external TeX commands, overriding project configuration")
+    external.add_argument("--restricted-shell-escape", dest="shell_escape", action="store_const", const="restricted",
+                          help="Permit only the TeX installation's restricted commands")
     parser.set_defaults(shell_escape=None)
     args = parser.parse_args()
     if not 72 <= args.dpi <= 300:

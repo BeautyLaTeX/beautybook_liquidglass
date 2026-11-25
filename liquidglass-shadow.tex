@@ -11,7 +11,7 @@
       \pgfmathsetlengthmacro\lg@dilation{max(#5+#2*\lg@t,-max(0,min(\lg@width,\lg@height)*.5-.05pt))}%
       \pgfmathsetmacro\lg@alpha{1-(1-#1)^(6*\lg@t*(1-\lg@t)/\lg@shadowsteps)}%
     }{%
-      \pgfmathsetlengthmacro\lg@dilation{#5+#2*\lg@i/\lg@shadowsteps}%
+      \pgfmathsetlengthmacro\lg@dilation{max(#5+#2*\lg@i/\lg@shadowsteps,-max(0,min(\lg@width,\lg@height)*.5-.05pt))}%
       \pgfmathsetmacro\lg@alpha{min(1,#1*exp(-3*(\lg@i/\lg@shadowsteps)^2)/(\lg@shadowsteps*.49))}%
     }%
     \csname tcb@shadow@\tcb@split@state\endcsname

@@ -1,0 +1,43 @@
+{
+  "name": "liquidglass-build",
+  "displayName": "LiquidGlass Build",
+  "description": "Build Beautybook, LiquidGlass and ordinary LaTeX from a visual VS Code sidebar.",
+  "publisher": "BeautyLaTeX",
+  "version": "1.6.3",
+  "license": "MIT",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "repository": { "type": "git", "url": "https://github.com/BeautyLaTeX/beautybook_liquidglass.git", "directory": "vscode-liquidglass" },
+  "main": "./extension.js",
+  "extensionKind": ["workspace"],
+  "capabilities": { "untrustedWorkspaces": { "supported": "limited", "description": "Compiling LaTeX requires Workspace Trust.", "restrictedConfigurations": ["liquidglassBuild.python"] } },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [{ "id": "liquidglass-build", "title": "LiquidGlass", "icon": "media/glass.svg" }]
+    },
+    "views": {
+      "liquidglass-build": [{ "type": "webview", "id": "liquidglassBuild.sidebar", "name": "编译面板" }]
+    },
+    "commands": [
+      { "command": "liquidglassBuild.build", "title": "编译当前 LaTeX 文档", "category": "LiquidGlass", "icon": "$(play)" },
+      { "command": "liquidglassBuild.cancel", "title": "停止编译", "category": "LiquidGlass", "icon": "$(debug-stop)" },
+      { "command": "liquidglassBuild.output", "title": "显示编译输出", "category": "LiquidGlass", "icon": "$(output)" },
+      { "command": "liquidglassBuild.pdf", "title": "在编辑器中查看 PDF", "category": "LiquidGlass", "icon": "$(file-pdf)" }
+    ],
+    "menus": {
+      "editor/context": [{ "command": "liquidglassBuild.build", "when": "resourceExtname == .tex && !isInDiffEditor", "group": "navigation@15" }],
+      "explorer/context": [{ "command": "liquidglassBuild.build", "when": "resourceExtname == .tex", "group": "navigation@15" }],
+      "view/title": [
+        { "command": "liquidglassBuild.build", "when": "view == liquidglassBuild.sidebar", "group": "navigation@1" },
+        { "command": "liquidglassBuild.output", "when": "view == liquidglassBuild.sidebar", "group": "navigation@2" }
+      ]
+    },
+    "configuration": {
+      "title": "LiquidGlass Build",
+      "properties": {
+        "liquidglassBuild.python": { "type": "string", "scope": "machine-overridable", "default": "", "description": "Python executable. When empty, detect the local virtual environment and available Python installations." },
+        "liquidglassBuild.shellEscape": { "type": "string", "enum": ["auto", "off", "restricted", "full"], "default": "auto", "description": "Auto inspects the document. Full shell escape requires workspace trust and confirmation for each build." }
+      }
+    }
+  }
+}

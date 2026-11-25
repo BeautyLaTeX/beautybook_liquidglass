@@ -140,19 +140,25 @@ def plain_run(command, project, console):
     # A separate process group lets cancellation also stop latexmk's TeX child.
     with console.open('wb') as stream:
         process = subprocess.Popen(command, cwd=project, stdout=stream,
-                                   stderr=subprocess.STDOUT, start_new_session=True)
+                                   stderr=subprocess.STDOUT, start_new_session=os.name == 'posix')
         try:
             return process.wait()
         except BaseException:
             try:
-                os.killpg(process.pid, signal.SIGTERM)
+                if os.name == 'posix':
+                    os.killpg(process.pid, signal.SIGTERM)
+                else:
+                    process.terminate()
             except ProcessLookupError:
                 pass
             try:
                 process.wait(timeout=5)
             except subprocess.TimeoutExpired:
                 try:
-                    os.killpg(process.pid, signal.SIGKILL)
+                    if os.name == 'posix':
+                        os.killpg(process.pid, signal.SIGKILL)
+                    else:
+                        process.kill()
                 except ProcessLookupError:
                     pass
                 process.wait()
@@ -182,10 +188,11 @@ def plain_build(main: Path, engine: str, shell_escape: bool = False) -> Path:
             option = {'lualatex': '-lualatex', 'xelatex': '-xelatex', 'pdflatex': '-pdf'}[engine]
             command = [latexmk, '-norc', option, '-synctex=1', '-recorder',
                        '-interaction=nonstopmode', '-halt-on-error', '-file-line-error',
-                       '-shell-escape' if shell_escape else '-no-shell-escape',
+                       SHELL_FLAGS[shell_escape],
                        '-outdir=' + workspace.relative_to(project).as_posix(),
                        './' + main.name]
             console = workspace / 'latexmk.console.txt'
+            print('Running latexmk', flush=True)
             status = plain_run(command, project, console)
             if plain_loaded_glass(workspace, job):
                 raise NeedsLiquidGlass('This document loads liquidglass; use the full LiquidGlass builder to generate exact materials.')
@@ -228,7 +235,6 @@ def plain_build(main: Path, engine: str, shell_escape: bool = False) -> Path:
 # macOS launcher menu and dispatch. SPDX-License-Identifier: MIT
 from pathlib import Path
 import argparse
-import importlib.util
 import json
 import os
 import re
@@ -237,6 +243,11 @@ import subprocess
 import sys
 
 SKIP_FOLDERS = {'build', 'out', 'output', 'outputs', 'dist', 'target', 'node_modules', 'venv', '__pycache__', '_minted', 'backup', 'backups'}
+SHELL_FLAGS = {False: '-no-shell-escape', 'restricted': '-shell-restricted', True: '-shell-escape'}
+SHELL_ARGUMENTS = {False: '--no-shell-escape', 'restricted': '--restricted-shell-escape', True: '--shell-escape'}
+ROOT_DIRECTIVE = re.compile(r'(?im)^\s*%\s*!\s*tex\s+root\s*=\s*(.+?)\s*$')
+MAIN_DECLARATION = re.compile(r'\\(?:documentclass|documentstyle)\s*(?:\[[^\]]*\]\s*)?\{')
+LITERAL_INPUT = re.compile(r'\\(?:input|include|subfile)\s*\{([^{}]+)\}|\\input\s+([^\s{}\\%]+)')
 
 
 def without_comments(text):
@@ -255,6 +266,83 @@ def without_comments(text):
 def read_source(path):
     with path.open('rb') as stream:
         return stream.read(2 * 1024 * 1024).decode('utf-8-sig', errors='replace')
+
+
+def document_source(path):
+    source = without_comments(read_source(path))
+    source = re.sub(r'(?s)\\begin\{(verbatim\*?|Verbatim|lstlisting|minted|maccode|macdarkcode)\}.*?\\end\{\1\}',
+                    lambda match: r'\begin{' + match[1] + '}', source)
+    return source
+
+
+def document_inputs(main, root):
+    """Yield literal source dependencies using TeX's main directory first."""
+    pending, seen = [main], set()
+    while pending and len(seen) < 1000:
+        current = pending.pop()
+        if current in seen:
+            continue
+        seen.add(current)
+        source = document_source(current)
+        yield current, source
+        for braced, bare in LITERAL_INPUT.findall(source):
+            name = (braced or bare).strip()
+            if not name or any(c in name for c in '\\%#\r\n'):
+                continue
+            path = Path(name)
+            if not path.suffix:
+                path = path.with_suffix('.tex')
+            for directory in (main.parent, current.parent):
+                target = (directory / path).resolve()
+                if (target.is_relative_to(root) or target.is_relative_to(main.parent)) and target.is_file():
+                    pending.append(target)
+                    break
+
+
+def document_mains(current, root):
+    chain = set()
+    while True:
+        if current in chain:
+            raise ValueError('Cyclic !TeX root directives.')
+        chain.add(current)
+        source = read_source(current)
+        directive = ROOT_DIRECTIVE.search(source)
+        if not directive:
+            break
+        current = (current.parent / directive[1].strip().strip('"')).resolve()
+        if not current.is_file() or current.suffix.casefold() != '.tex':
+            raise ValueError('The !TeX root file does not exist: ' + str(current))
+    if MAIN_DECLARATION.search(without_comments(source)):
+        return [current]
+    return [main for main in discover(root, True)
+            if any(path == current for path, _ in document_inputs(main, root))]
+
+
+def restricted_minted_available():
+    kpse = shutil.which('kpsewhich')
+    if not (kpse and shutil.which('latexminted')):
+        return False
+    result = subprocess.run([kpse, '-var-value=shell_escape_commands'], text=True,
+                            encoding='utf-8', errors='replace', capture_output=True, timeout=5)
+    return result.returncode == 0 and 'latexminted' in result.stdout.strip().split(',')
+
+
+def detect_external_commands(main, root):
+    inputs = list(document_inputs(main, root))
+    for path, _ in inputs:
+        header = '\n'.join(read_source(path).splitlines()[:50])
+        explicit = re.search(r'(?im)^\s*%\s*!\s*tex\s+shell-escape\s*=\s*(true|false|restricted)\s*$', header)
+        if explicit:
+            choice = {'true': True, 'false': False, 'restricted': 'restricted'}[explicit[1].casefold()]
+            return choice, f'!TeX shell-escape in {path.name}'
+    text = '\n'.join(source for _, source in inputs)
+    if re.search(r'\\(?:tikzexternalize|immediate\s*\\write\s*18|write\s*18)\b|gnuplot\s*\{|\\begin\{asy\}', text):
+        return True, 'Detected a TeX command that invokes an external program'
+    if re.search(r'\\(?:inputminted|mintinline|mint)\b|\\begin\{(?:minted|maccode|macdarkcode)\}|listing engine\s*=\s*minted', text):
+        if restricted_minted_available():
+            return 'restricted', 'minted via the TeX restricted command list'
+        return True, 'minted without latexminted on the restricted command list'
+    return False, 'No external command detected'
 
 
 def natural_key(value):
@@ -313,7 +401,7 @@ def choose_document(root, recursive=False):
         print('输入无效，请重试 / Invalid selection; please try again.')
 
 
-def launcher_options(main, args):
+def launcher_options(main, args, root=None):
     settings = {}
     document_settings = {}
     config = main.parent / 'liquidglass.json'
@@ -349,8 +437,14 @@ def launcher_options(main, args):
         engine = (document_settings.get('engine') or
                   (match.group(1).lower() if match else None) or
                   settings.get('engine') or 'lualatex')
-    shell = args.shell_escape if args.shell_escape is not None else settings.get('shell_escape', False)
-    return engine, shell
+    if args.shell_escape is not None:
+        return engine, args.shell_escape, 'Command-line selection'
+    if 'shell_escape' in settings:
+        return engine, settings['shell_escape'], 'liquidglass.json'
+    if args.detect_shell_escape:
+        mode, reason = detect_external_commands(main, root or main.parent)
+        return engine, mode, reason
+    return engine, False, 'Default'
 
 
 def find_driver(main, root):
@@ -419,7 +513,7 @@ def run_glass(driver, main, engine, shell_escape):
     if python is None:
         raise RuntimeError('Glass builds need Python with Pillow. Run: python3 -m pip install Pillow')
     result = subprocess.run([python, str(driver), str(main), '--engine', engine,
-                             '--shell-escape' if shell_escape else '--no-shell-escape'], cwd=main.parent)
+                             SHELL_ARGUMENTS[shell_escape]], cwd=main.parent)
     if result.returncode:
         # A preamble heuristic can be fooled by an unused conditional import.
         # Only fall back when the full driver confirms no geometry AND no loaded package.
@@ -441,7 +535,10 @@ def launcher_main(root, arguments=None):
     external = parser.add_mutually_exclusive_group()
     external.add_argument('--shell-escape', dest='shell_escape', action='store_true')
     external.add_argument('--no-shell-escape', dest='shell_escape', action='store_false')
+    external.add_argument('--restricted-shell-escape', dest='shell_escape', action='store_const', const='restricted')
     parser.set_defaults(shell_escape=None)
+    parser.add_argument('--detect-shell-escape', action='store_true', help='Detect external commands in the document')
+    parser.add_argument('--inspect-json', action='store_true', help='Resolve a selected TeX file and print build information')
     parser.add_argument('--no-open', action='store_true', help='Do not open the resulting PDF')
     parser.add_argument('--no-pause', action='store_true', help='Never close the terminal window automatically')
     parser.add_argument('--keep-window', action='store_true', help='Keep the Terminal window when quitting the menu')
@@ -458,6 +555,13 @@ def launcher_main(root, arguments=None):
         main = (root / Path(args.document).expanduser()).resolve()
         if not main.is_file() or main.suffix.casefold() != '.tex':
             parser.error('Expected an existing .tex source: ' + str(main))
+        if args.inspect_json:
+            plans = []
+            for candidate in document_mains(main, root):
+                engine, shell, reason = launcher_options(candidate, args, root)
+                plans.append({'main': str(candidate), 'engine': engine, 'shell': shell, 'reason': reason})
+            print(json.dumps(plans), flush=True)
+            return 0
         build_document(main, root, args)
         return 0
 
@@ -482,7 +586,7 @@ def launcher_main(root, arguments=None):
 def build_document(main, root, args):
     # Publish the matching PDF/SyncTeX pair only after this build succeeds.
     # Preflight errors or another active job must not remove a prior good pair.
-    engine, shell = launcher_options(main, args)
+    engine, shell, _ = launcher_options(main, args, root)
     driver = find_driver(main, root)
     print(f'\n构建 / Building: {main.name}\nEngine: {engine}; shell escape: {shell}', flush=True)
     if glass_hint(main, root):

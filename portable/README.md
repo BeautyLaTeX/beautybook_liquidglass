@@ -1,4 +1,4 @@
-# LiquidGlass 1.6.2
+# LiquidGlass 1.6.3
 
 把包内以 `liquidglass` 命名的全部 `.sty`、`.tex`，以及 `liquidglass-assets/` 和 `lgbuild.py` 放在主 `.tex` 同一层。macOS 可一起复制 `build.command`，双击选择文件。完整示例和图解分别见 `example.pdf`、`Guide.pdf`。
 
