@@ -1,15 +1,14 @@
 const vscode = require('vscode');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const os = require('node:os');
 const { randomBytes } = require('node:crypto');
 const { spawn } = require('node:child_process');
 const { StringDecoder } = require('node:string_decoder');
-const { phaseFor, diagnostics } = require('./build-ui');
+const { ENGINES, buildSelection, selectionArguments, progressFor, diagnostics } = require('./build-ui');
 
 const phases = {
-  idle: '等待编译', inspect: '检测主文件与编译权限', capture: '定位跨页玻璃片段',
-  render: '生成材质', compose: '合成最终 PDF', latex: '编译普通 LaTeX',
+  idle: '等待编译', inspect: '准备编译', capture: '定位玻璃片段', recapture: '重新定位玻璃片段',
+  render: '生成玻璃材质', compose: '合成 PDF', latex: '运行 LaTeX', save: '保存 PDF 与 SyncTeX',
   done: '编译完成', error: '编译失败', canceled: '已取消'
 };
 
@@ -80,16 +79,19 @@ async function prepareLauncher(context) {
 function activate(context) {
   const output = vscode.window.createOutputChannel('LiquidGlass');
   const problems = vscode.languages.createDiagnosticCollection('LiquidGlass');
-  let view, request, lastPdf;
-  let state = { phase: 'idle', file: '', detail: '', problems: [], pdf: false, busy: false };
+  let view, request, lastPdf, activeSource;
+  const selectionKey = 'liquidglassBuild.selection';
+  let selection = buildSelection(context.workspaceState.get(selectionKey));
+  let state = { phase: 'idle', progress: 0, file: '', detail: '', problems: [], pdf: false, busy: false };
 
-  const publish = () => view?.webview.postMessage({ ...state, title: phases[state.phase] });
+  const publish = () => view?.webview.postMessage({ ...state, selection, title: phases[state.phase] });
   const update = change => { state = { ...state, ...change }; publish(); };
   const currentUri = () => vscode.window.activeTextEditor?.document.uri;
   const syncEditor = () => {
-    if (state.busy) return;
     const uri = currentUri();
-    update({ file: uri && /\.tex$/i.test(uri.path) ? path.basename(uri.path) : '' });
+    if (state.busy || !uri || !/\.tex$/i.test(uri.path) || uri.fsPath === activeSource) return;
+    activeSource = uri.fsPath;
+    update({ phase: 'idle', progress: 0, file: path.basename(uri.path), detail: '', problems: [], pdf: false });
   };
 
   async function cancel() {
@@ -118,10 +120,12 @@ function activate(context) {
       vscode.window.showInformationMessage('请打开或右键选择一个已保存的 LaTeX 文件。'); return;
     }
     const job = request = { canceled: false, child: null };
+    const flags = selectionArguments(selection);
     let main = selected.fsPath;
     const root = vscode.workspace.getWorkspaceFolder(selected)?.uri.fsPath ?? path.dirname(main);
     const config = vscode.workspace.getConfiguration('liquidglassBuild', selected);
-    update({ phase: 'inspect', file: path.basename(main), detail: '', busy: true, problems: [], pdf: false });
+    activeSource = main;
+    update({ phase: 'inspect', progress: 0, file: path.basename(main), detail: '', busy: true, problems: [], pdf: false });
     output.clear();
     problems.clear();
     try {
@@ -134,10 +138,7 @@ function activate(context) {
       const env = environment();
       const python = await pythonFor(root, path.dirname(main), config.get('python'), env);
       if (job.canceled) return;
-      const choice = config.get('shellEscape', 'auto');
-      const override = { off: '--no-shell-escape', restricted: '--restricted-shell-escape', full: '--shell-escape' }[choice];
-      const args = [launcher, root, '--inspect-json', '--detect-shell-escape'];
-      if (override) args.push(override);
+      const args = [launcher, root, '--inspect-json', ...flags];
       const inspected = await childResult(spawn(python, [...args, main], { cwd: root, env, windowsHide: true }), undefined, 30000);
       if (job.canceled) return;
       if (inspected.code !== 0) throw new Error(inspected.stderr.trim() || '无法解析 LaTeX 主文件。');
@@ -160,17 +161,17 @@ function activate(context) {
         if (!answer || job.canceled) { job.canceled = true; return; }
       }
       const shellLabel = plan.shell === true ? '完整权限' : plan.shell === 'restricted' ? '受限权限' : '已关闭';
-      const flag = plan.shell === true ? '--shell-escape' : plan.shell === 'restricted' ? '--restricted-shell-escape' : '--no-shell-escape';
-      const detail = plan.engine + '  ·  Shell escape ' + shellLabel;
-      update({ file: path.basename(main), detail });
+      const detail = path.basename(main) === state.file ? '' : '主文件 ' + path.basename(main);
+      update({ detail, progress: 5 });
+      output.appendLine(plan.engine + '  ·  Shell escape ' + shellLabel);
       output.appendLine(main + '\n' + detail + '\n' + plan.reason + '\n');
       output.show(true);
-      job.child = spawn(python, [launcher, root, '--no-open', '--no-pause', '--sync-next-to-pdf', '--engine', plan.engine, flag, main],
-        { cwd: path.dirname(main), env, detached: process.platform !== 'win32', windowsHide: true });
+      job.child = spawn(python, [launcher, root, '--no-open', '--no-pause', '--sync-next-to-pdf', ...flags, main],
+        { cwd: path.dirname(main), env: { ...env, LIQUIDGLASS_PROGRESS: '1' }, detached: process.platform !== 'win32', windowsHide: true });
       const result = await childResult(job.child, line => {
-        output.appendLine(line);
-        const phase = phaseFor(line);
-        if (phase && !job.canceled) update({ phase });
+        if (!line.startsWith('LiquidGlass progress: ')) output.appendLine(line);
+        const event = progressFor(line);
+        if (event && !job.canceled) update({ ...event, progress: Math.max(state.progress, event.progress) });
       });
       if (job.canceled) return;
       if (result.code !== 0) {
@@ -197,7 +198,7 @@ function activate(context) {
         return;
       }
       lastPdf = main.replace(/\.tex$/i, '.pdf');
-      update({ phase: 'done', detail, pdf: true });
+      update({ phase: 'done', progress: 100, detail, pdf: true });
     } catch (error) {
       if (!job.canceled) {
         output.appendLine(error.message);
@@ -237,8 +238,13 @@ function activate(context) {
         next.webview.html = html.replaceAll('{{NONCE}}', nonce).replaceAll('{{SOURCE}}', next.webview.cspSource)
           .replace('{{CSS}}', next.webview.asWebviewUri(vscode.Uri.joinPath(media, 'panel.css')).toString())
           .replace('{{JS}}', next.webview.asWebviewUri(vscode.Uri.joinPath(media, 'panel.js')).toString());
-        next.webview.onDidReceiveMessage(async ({ action, index }) => {
+        next.webview.onDidReceiveMessage(async ({ action, index, engine, shellEscape }) => {
           if (action === 'ready') publish();
+          if (action === 'select' && !state.busy && ENGINES.includes(engine) && typeof shellEscape === 'boolean') {
+            selection = buildSelection({ engine, shellEscape });
+            publish();
+            await context.workspaceState.update(selectionKey, selection);
+          }
           if (action === 'build') await build();
           if (action === 'cancel') await cancel();
           if (action === 'output') output.show(true);

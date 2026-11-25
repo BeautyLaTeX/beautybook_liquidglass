@@ -2,13 +2,13 @@
 
 Beautybook LiquidGlass 是一套面向数学书稿、课程讲义和研究笔记的 LaTeX 模板，附带可独立移植的 **LiquidGlass 1.6.3** 宏包。银蓝磨砂底图、柔和悬浮阴影和跨页玻璃定理盒沿用同一套材质。模板保留 Beautybook 的封面、页边栏、卷边标题、代码窗和时间线。
 
-[LiquidGlass 1.6.3 Release](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/tag/v1.6.3) · [便携 ZIP](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/download/v1.6.3/LiquidGlass-1.6.3.zip) · [图解手册 PDF](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/download/v1.6.3/LiquidGlass-Guide-1.6.3.pdf) · [VS Code 扩展](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/download/v1.6.3/liquidglass-build-1.6.3.vsix)
+[LiquidGlass 1.6.3 Release](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/tag/v1.6.3) · [便携 ZIP](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/download/v1.6.3/LiquidGlass-1.6.3.zip) · [图解手册 PDF](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/download/v1.6.3/LiquidGlass-Guide-1.6.3.pdf) · [VS Code 扩展 1.6.4](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/download/vscode-v1.6.4/liquidglass-build-1.6.4.vsix)
 
 ## 在 VS Code 中编译
 
-下载 `.vsix`，在扩展视图的菜单中选 **从 VSIX 安装**。打开项目后点击左侧 **LiquidGlass** 图标，或右键单击 `.tex` 文件选择 **编译当前 LaTeX 文档**。面板显示构建阶段和可点击的报错，底部 **输出 → LiquidGlass** 提供完整日志。
+从 [扩展的独立 Release](https://github.com/BeautyLaTeX/beautybook_liquidglass/releases/tag/vscode-v1.6.4) 下载 `.vsix`，在扩展视图的菜单中选 **从 VSIX 安装**。打开项目后点击左侧 **LiquidGlass** 图标，在侧栏选择 pdfLaTeX、XeLaTeX 或 LuaLaTeX，并按需打开 Shell Escape。两项选择按工作区记忆，右键编译也使用同一组设置。
 
-扩展会解析 `% !TeX root` 和章节引用，自动选择主文件与外部命令权限。普通文档关闭 shell-escape，支持受限模式的 minted 使用 TeX 的命令白名单，需要完整权限时会显示原因并请你确认。项目可通过 `liquidglass.json` 或 `% !TeX shell-escape = true|false|restricted` 指定策略。若使用 LaTeX Workshop 预览 PDF，建议让 LiquidGlass 负责编译并关闭 LaTeX Workshop 的保存时自动构建。
+扩展通过 `% !TeX root` 和章节引用定位主文件。侧栏圆盘按实际构建阶段推进，成功后显示 100%。错误可从侧栏跳到源码，完整日志在底部 **输出 → LiquidGlass**。Shell Escape 默认关闭，打开后需在编译前确认本次权限。若使用 LaTeX Workshop 预览 PDF，建议让 LiquidGlass 负责编译并关闭 LaTeX Workshop 的保存时自动构建。
 
 ## 使用 Beautybook 模板
 

@@ -207,6 +207,8 @@ def plain_build(main: Path, engine: str, shell_escape: bool = False) -> Path:
             pdf_bytes = pdf.read_bytes()
             if not pdf_bytes.startswith(b'%PDF-'):
                 raise PlainBuildError('The compiler output is not a PDF.')
+            if os.environ.get('LIQUIDGLASS_PROGRESS') == '1':
+                print('Saving PDF and SyncTeX', flush=True)
             plain_atomic_bytes(build_directory / (job + '.synctex.gz'), sync)
             destination = project / (job + '.pdf')
             plain_atomic_bytes(destination, pdf_bytes)

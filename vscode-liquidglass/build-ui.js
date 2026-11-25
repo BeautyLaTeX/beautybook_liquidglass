@@ -1,10 +1,32 @@
 const path = require('node:path');
 
-function phaseFor(line) {
-  if (/capturing|位置重新|recapturing/i.test(line)) return 'capture';
-  if (/^Rendering \d+ pane/i.test(line)) return 'render';
-  if (/^Composing final PDF/i.test(line)) return 'compose';
-  if (/^Running latexmk/i.test(line)) return 'latex';
+const ENGINES = ['pdflatex', 'xelatex', 'lualatex'];
+
+function buildSelection(value) {
+  return {
+    engine: ENGINES.includes(value?.engine) ? value.engine : 'xelatex',
+    shellEscape: value?.shellEscape === true
+  };
+}
+
+function selectionArguments(selection) {
+  const { engine, shellEscape } = buildSelection(selection);
+  return ['--engine', engine, shellEscape ? '--shell-escape' : '--no-shell-escape'];
+}
+
+function progressFor(line) {
+  if (/^LiquidGlass .*: capturing /i.test(line)) return { phase: 'capture', progress: 12 };
+  if (/^Layout changed .*recapturing positions/i.test(line)) return { phase: 'recapture', progress: 12 };
+  const pass = /^LiquidGlass progress: capture (\d+)$/i.exec(line);
+  if (pass) return { progress: Math.min(42, 12 + Number(pass[1]) * 5) };
+  if (/^Rendering \d+ pane/i.test(line)) return { phase: 'render', progress: 46 };
+  const panes = /^LiquidGlass progress: render (\d+)\/(\d+)$/i.exec(line);
+  if (panes && Number(panes[2]) > 0) {
+    return { phase: 'render', progress: Math.min(82, 46 + Math.round(36 * Number(panes[1]) / Number(panes[2]))) };
+  }
+  if (/^Composing final PDF/i.test(line)) return { phase: 'compose', progress: 88 };
+  if (/^Running latexmk/i.test(line)) return { phase: 'latex', progress: 26 };
+  if (/^Saving PDF and SyncTeX/i.test(line)) return { phase: 'save', progress: 96 };
   return null;
 }
 
@@ -26,4 +48,4 @@ function diagnostics(log, main) {
   return records;
 }
 
-module.exports = { phaseFor, diagnostics };
+module.exports = { ENGINES, buildSelection, selectionArguments, progressFor, diagnostics };

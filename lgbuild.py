@@ -639,7 +639,9 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
         old_index = {}
     index = {}
     renderer_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-    for pane in panes:
+    report_progress = os.environ.get("LIQUIDGLASS_PROGRESS") == "1"
+    progress_stride = max(1, math.ceil(len(panes) / 18))
+    for completed, pane in enumerate(panes, 1):
         width = max(1, round(pane.width * pixel_factor))
         height = max(1, round(pane.height * pixel_factor))
         if width * height > 24_000_000:
@@ -691,6 +693,8 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
             rf"\expandafter\gdef\csname lg@height@{pane.fragment}\endcsname{{{pane.height}}}",
         ])
         report.append({**asdict(pane), "resolved_source": source_name, "pixels": [width, height], "contrast_min": round(ratio, 4), "adaptive_tint": round(adaptive, 5), "sha256": digest, "file": relative, "cache_hit": cached})
+        if report_progress and (completed == len(panes) or completed % progress_stride == 0):
+            print(f"LiquidGlass progress: render {completed}/{len(panes)}", flush=True)
     atomic_bytes(index_file, (json.dumps(index, sort_keys=True, indent=2) + "\n").encode())
     return report, "\n".join(mapping) + "\n", changed
 
@@ -838,6 +842,7 @@ def staged_build(args, main, workspace):
     auxiliary_state = {}
     shell_label = {True: "enabled", False: "disabled", "restricted": "restricted"}[shell_escape]
     print(f"LiquidGlass {VERSION}: capturing {main.name} ({engine_name}, shell escape {shell_label})", flush=True)
+    report_progress = os.environ.get("LIQUIDGLASS_PROGRESS") == "1"
     for attempt in range(1, 4):
         previous = None
         for capture_pass in range(6):
@@ -846,6 +851,8 @@ def staged_build(args, main, workspace):
             tools_changed = run_auxiliary_tools(capture, project, job, auxiliary_state,
                                                 bibliography, index, env)
             panes = parse_records(capture / f"{job}.lgr", capture / f"{job}.aux")
+            if report_progress:
+                print(f"LiquidGlass progress: capture {capture_pass + 1}", flush=True)
             if previous == panes and not tools_changed:
                 break
             previous = panes
@@ -889,6 +896,8 @@ def build(args):
         workspace = Path(tempfile.mkdtemp(prefix=".liquidglass-" + short_job + "-", dir=build_directory))
         try:
             final, payload = staged_build(args, main, workspace)
+            if os.environ.get("LIQUIDGLASS_PROGRESS") == "1":
+                print("Saving PDF and SyncTeX", flush=True)
             synchronization = sync_data(final, project, job)
             atomic_bytes(build_directory / (job + ".synctex.gz"), synchronization)
             atomic_bytes(project / (job + ".pdf"), (final / (job + ".pdf")).read_bytes())

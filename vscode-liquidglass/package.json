@@ -3,7 +3,7 @@
   "displayName": "LiquidGlass Build",
   "description": "Build Beautybook, LiquidGlass and ordinary LaTeX from a visual VS Code sidebar.",
   "publisher": "BeautyLaTeX",
-  "version": "1.6.3",
+  "version": "1.6.4",
   "license": "MIT",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
@@ -35,8 +35,7 @@
     "configuration": {
       "title": "LiquidGlass Build",
       "properties": {
-        "liquidglassBuild.python": { "type": "string", "scope": "machine-overridable", "default": "", "description": "Python executable. When empty, detect the local virtual environment and available Python installations." },
-        "liquidglassBuild.shellEscape": { "type": "string", "enum": ["auto", "off", "restricted", "full"], "default": "auto", "description": "Auto inspects the document. Full shell escape requires workspace trust and confirmation for each build." }
+        "liquidglassBuild.python": { "type": "string", "scope": "machine-overridable", "default": "", "description": "Python executable. When empty, detect the local virtual environment and available Python installations." }
       }
     }
   }
