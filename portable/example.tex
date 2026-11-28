@@ -1,10 +1,12 @@
 % !TeX program = lualatex
-\documentclass[UTF8,fontset=fandol,12pt,oneside]{ctexbook}
+\documentclass[UTF8,fontset=none,12pt,oneside]{ctexbook}
 \usepackage[a4paper,left=20mm,right=20mm,top=24mm,bottom=22mm]{geometry}
 \usepackage{amsmath}
 \usepackage{liquidglass}
 \usepackage[hidelinks]{hyperref}
 \glasssettheoremlanguage{zh}
+\glassbackground{@reading}
+\glasssetup{lg material=reading-window}
 \definecolor{DemoPaper}{HTML}{F5F5F5}
 \pagecolor{DemoPaper}
 
@@ -16,8 +18,13 @@
     BoldFont=FZheiti_GBK.TTF,ItalicFont=FZkaiti_GBK.TTF,
     SlantedFont=FZfangsong_GBK.TTF]{FZsongti_GBK.TTF}%
 }{%
-  \setCJKmainfont[BoldFont=FandolHei-Regular.otf,ItalicFont=FandolKai-Regular.otf,
-    BoldItalicFont=FandolHei-Regular.otf]{FandolSong-Regular.otf}%
+  \IfFontExistsTF{FandolSong-Regular.otf}{%
+    \setCJKmainfont[BoldFont=FandolHei-Regular.otf,ItalicFont=FandolKai-Regular.otf,
+      BoldItalicFont=FandolHei-Regular.otf]{FandolSong-Regular.otf}%
+  }{%
+    \IfFontExistsTF{Songti SC}{\setCJKmainfont[AutoFakeBold,AutoFakeSlant]{Songti SC}}{%
+      \PackageError{liquidglass-example}{No Chinese font was found}{Install the TeX Live fandol package or set LiquidGlassFontRoot.}}%
+  }%
 }
 \IfFileExists{\LiquidGlassFontRoot enfonts/xits/XITS-Regular.otf}{%
   \setmainfont[Path=\LiquidGlassFontRoot enfonts/xits/,Extension=.otf,
@@ -97,4 +104,14 @@ $a=3$、$b=1$ 时，左侧为 $10$，右侧为 $6$。
 \begin{lgconjecture}[lg theme=dark]{深色主题示例}{dark}
 观察更多数据，再决定猜想是否值得继续验证。
 \end{lgconjecture}
+\clearpage
+\section*{银蓝悬浮阅读材质}
+\begin{glassbox}[lg material=reading,lg image=@silver,lg radius=4mm]
+  \textbf{银蓝阅读。} 设 $\bar{x}=\frac{1}{n}\sum_{i=1}^n x_i$，则
+  \[\sum_{i=1}^n(x_i-\bar{x})^2=\sum_{i=1}^n x_i^2-n\bar{x}^{\,2}.\]
+\end{glassbox}
+\begin{glassbox}[lg material=reading-lens,lg image=@silver,lg radius=4mm]
+  \textbf{悬浮阅读。} 正文面保留银蓝磨砂。白色细高光沿受光圆角渐隐，双层柔影托起玻璃面。
+  \[\sum_{i=1}^n(x_i-\bar{x})^2=\sum_{i=1}^n x_i^2-n\bar{x}^{\,2}.\]
+\end{glassbox}
 \end{document}

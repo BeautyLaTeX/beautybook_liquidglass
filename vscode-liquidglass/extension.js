@@ -1,16 +1,13 @@
 const vscode = require('vscode');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { randomBytes } = require('node:crypto');
+const { renderWebview, bindWebviewFontScale } = require('./webview');
+const { registerStudio } = require('./selection');
+const { registerMaterialLab } = require('./studio');
+const { createBuildLog } = require('./build-log');
 const { spawn } = require('node:child_process');
 const { StringDecoder } = require('node:string_decoder');
-const { ENGINES, buildSelection, selectionArguments, progressFor, diagnostics } = require('./build-ui');
-
-const phases = {
-  idle: '等待编译', inspect: '准备编译', capture: '定位玻璃片段', recapture: '重新定位玻璃片段',
-  render: '生成玻璃材质', compose: '合成 PDF', latex: '运行 LaTeX', save: '保存 PDF 与 SyncTeX',
-  done: '编译完成', error: '编译失败', canceled: '已取消'
-};
+const { ENGINES, captions, buildSelection, selectionArguments, initialBuild, progressFor, tick, routeStatus, diagnostics } = require('./build-ui');
 
 function childResult(child, onLine = () => {}, timeout = 0) {
   let stdout = '', stderr = '';
@@ -36,31 +33,38 @@ function childResult(child, onLine = () => {}, timeout = 0) {
   });
 }
 
-function environment() {
+function environment(extensionPath) {
   const defaults = process.platform === 'darwin'
     ? ['/Library/TeX/texbin', '/opt/homebrew/bin', '/usr/local/bin'] : [];
-  return { ...process.env, PATH: [process.env.PATH, ...defaults].filter(Boolean).join(path.delimiter), PYTHONUTF8: '1', PYTHONUNBUFFERED: '1' };
+  return { ...process.env, PATH: [process.env.PATH, ...defaults, process.platform === 'darwin' && extensionPath && path.join(extensionPath,'runtime','mac-bin')].filter(Boolean).join(path.delimiter), PYTHONUTF8: '1', PYTHONUNBUFFERED: '1' };
 }
 
 async function pythonFor(root, mainDir, configured, env) {
-  const candidateFrom = dir => path.join(dir, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+  const pythonIn = process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python';
+  const candidateFrom = dir => path.join(dir, '.venv', pythonIn);
+  const externalVenv = path.join(path.dirname(root), '.' + path.basename(root) + '.venv', pythonIn);
   const candidates = configured ? [configured] : [
-    env.LIQUIDGLASS_PYTHON, candidateFrom(mainDir), candidateFrom(root), 'python3', 'python',
+    env.LIQUIDGLASS_PYTHON, candidateFrom(mainDir), candidateFrom(root), externalVenv, 'python3', 'python',
     '/opt/homebrew/bin/python3', '/usr/local/bin/python3'
   ];
   let usable;
+  let pillow;
   for (const candidate of new Set(candidates.filter(Boolean))) {
     try {
       const result = await childResult(spawn(candidate, ['-c',
-        'import sys, importlib.util; print(int(sys.version_info >= (3, 9)), int(importlib.util.find_spec("PIL") is not None))'
+        'import sys\ndef available(module):\n try: __import__(module)\n except (ImportError, OSError): return False\n return True\nprint(int(sys.version_info >= (3, 9)), int(available("PIL.ImageCms")), int(available("numpy")))'
       ], { env, windowsHide: true }), undefined, 5000);
-      if (result.code === 0 && result.stdout.trim() === '1 1') return candidate;
-      if (result.code === 0 && result.stdout.trim() === '1 0') usable ??= candidate;
+      if (result.code !== 0) continue;
+      const [supported, hasPillow, hasNumPy] = result.stdout.trim().split(/\s+/);
+      if (supported !== '1') continue;
+      if (configured || (hasPillow === '1' && hasNumPy === '1')) return candidate;
+      if (hasPillow === '1') pillow ??= candidate;
+      usable ??= candidate;
     } catch (error) {
       if (configured) throw error;
     }
   }
-  if (usable) return usable;
+  if (pillow || usable) return pillow || usable;
   throw new Error('找不到 Python 3.9 或更高版本。请在设置中指定 Python。');
 }
 
@@ -76,22 +80,51 @@ async function prepareLauncher(context) {
   return target;
 }
 
-function activate(context) {
-  const output = vscode.window.createOutputChannel('LiquidGlass');
-  const problems = vscode.languages.createDiagnosticCollection('LiquidGlass');
-  let view, request, lastPdf, activeSource;
-  const selectionKey = 'liquidglassBuild.selection';
-  let selection = buildSelection(context.workspaceState.get(selectionKey));
-  let state = { phase: 'idle', progress: 0, file: '', detail: '', problems: [], pdf: false, busy: false };
+function configuredPython(uri) {
+  return vscode.workspace.getConfiguration('liquidglassLatexStudio',uri).get('python') ||
+    vscode.workspace.getConfiguration('liquidglassBuild',uri).get('python');
+}
 
-  const publish = () => view?.webview.postMessage({ ...state, selection, title: phases[state.phase] });
+async function legacySelection(context) {
+  if (context.storageUri?.scheme !== 'file') return undefined;
+  const database = path.join(path.dirname(context.storageUri.fsPath),'state.vscdb');
+  if (!await fs.stat(database).then(stat=>stat.isFile()).catch(()=>false)) return undefined;
+  const env = environment();
+  const python = await pythonFor(path.dirname(database),path.dirname(database),undefined,env);
+  const script = path.join(context.extensionPath,'runtime','legacy_state.py');
+  const result = await childResult(spawn(python,[script,database],{env,windowsHide:true}),undefined,2500);
+  if (result.code === 0) return JSON.parse(result.stdout);
+}
+
+async function activate(context) {
+  const studioEnvironment = () => environment(context.extensionPath);
+  const output = createBuildLog();
+  const problems = vscode.languages.createDiagnosticCollection('LiquidGlass LaTeX Studio');
+  let view, request, lastPdf, activeSource;
+  const selectionKey = 'liquidglassLatexStudio.selection';
+  const stored = context.workspaceState.get(selectionKey);
+  const previous = stored === undefined ? await legacySelection(context).catch(()=>undefined) : undefined;
+  let selection = buildSelection(stored ?? previous ?? {followProject:true});
+  if (previous) await context.workspaceState.update(selectionKey,selection);
+  let state = initialBuild();
+
+  const publish = () => {
+    const event = { ...state, selection, title:captions[state.phase], stages:routeStatus(state) };
+    view?.webview.postMessage(event);
+    studioSettings.buildState(event);
+  };
   const update = change => { state = { ...state, ...change }; publish(); };
   const currentUri = () => vscode.window.activeTextEditor?.document.uri;
+  const uriForBuild = () => {
+    const uri = currentUri();
+    if (uri?.scheme === 'file' && /\.tex$/i.test(uri.path)) return uri;
+    return activeSource ? vscode.Uri.file(activeSource) : undefined;
+  };
   const syncEditor = () => {
     const uri = currentUri();
-    if (state.busy || !uri || !/\.tex$/i.test(uri.path) || uri.fsPath === activeSource) return;
+    if (!uri || !/\.tex$/i.test(uri.path) || uri.fsPath === activeSource) return;
     activeSource = uri.fsPath;
-    update({ phase: 'idle', progress: 0, file: path.basename(uri.path), detail: '', problems: [], pdf: false });
+    if (state.phase==='idle') update(initialBuild(path.basename(uri.path),{source:uri.fsPath}));
   };
 
   async function cancel() {
@@ -115,7 +148,7 @@ function activate(context) {
     if (!vscode.workspace.isTrusted) {
       vscode.window.showWarningMessage('请在信任的工作区中运行 LaTeX 编译。'); return;
     }
-    const selected = uri?.fsPath ? uri : currentUri();
+    const selected = uri?.fsPath ? uri : uriForBuild();
     if (!selected || selected.scheme !== 'file' || !/\.tex$/i.test(selected.fsPath)) {
       vscode.window.showInformationMessage('请打开或右键选择一个已保存的 LaTeX 文件。'); return;
     }
@@ -123,10 +156,13 @@ function activate(context) {
     const flags = selectionArguments(selection);
     let main = selected.fsPath;
     const root = vscode.workspace.getWorkspaceFolder(selected)?.uri.fsPath ?? path.dirname(main);
-    const config = vscode.workspace.getConfiguration('liquidglassBuild', selected);
     activeSource = main;
-    update({ phase: 'inspect', progress: 0, file: path.basename(main), detail: '', busy: true, problems: [], pdf: false });
+    const now=Date.now();
+    state = initialBuild(path.basename(main),{source:main,root});
+    update({ ...tick(state,{phase:'inspect',progress:3},now), busy:true, started:now,
+      timeline:[{step:'inspect',title:captions.inspect,time:now,attempt:1}] });
     output.clear();
+    output.appendLine(captions.inspect + ' · ' + main);
     problems.clear();
     try {
       for (const doc of vscode.workspace.textDocuments) {
@@ -135,11 +171,13 @@ function activate(context) {
         if (!(await doc.save())) throw new Error('保存失败。请保存改动后重新编译。');
       }
       const launcher = await prepareLauncher(context);
-      const env = environment();
-      const python = await pythonFor(root, path.dirname(main), config.get('python'), env);
+      const env = studioEnvironment();
+      const python = await pythonFor(root, path.dirname(main), configuredPython(selected), env);
       if (job.canceled) return;
       const args = [launcher, root, '--inspect-json', ...flags];
-      const inspected = await childResult(spawn(python, [...args, main], { cwd: root, env, windowsHide: true }), undefined, 30000);
+      job.child = spawn(python,[...args,main],{cwd:root,env,detached:process.platform!=='win32',windowsHide:true});
+      const inspected = await childResult(job.child,undefined,30000);
+      job.child = undefined;
       if (job.canceled) return;
       if (inspected.code !== 0) throw new Error(inspected.stderr.trim() || '无法解析 LaTeX 主文件。');
       const plans = JSON.parse(inspected.stdout);
@@ -152,6 +190,11 @@ function activate(context) {
         plan = pick.entry;
       }
       main = plan.main;
+      const stem=path.join(path.dirname(main),'build',path.basename(main,path.extname(main)));
+      const pdf=main.replace(/\.tex$/i,'.pdf');
+      output.appendLine(captions.prepare + ' · ' + main);
+      update({...tick(state,{phase:'prepare',route:plan.route,progress:10}),engine:plan.engine,
+        paths:{source:selected.fsPath,root,main,pdf,synctex:pdf.replace(/\.pdf$/i,'.synctex.gz'),log:stem+'.log'}});
       if (plan.shell === true) {
         const answer = await vscode.window.showWarningMessage(
           '当前构建需要完整 shell-escape。TeX 可以执行文档中的外部命令。',
@@ -162,20 +205,27 @@ function activate(context) {
       }
       const shellLabel = plan.shell === true ? '完整权限' : plan.shell === 'restricted' ? '受限权限' : '已关闭';
       const detail = path.basename(main) === state.file ? '' : '主文件 ' + path.basename(main);
-      update({ detail, progress: 5 });
+      update({detail:detail||'正在启动 '+plan.engine,shellLabel});
       output.appendLine(plan.engine + '  ·  Shell escape ' + shellLabel);
       output.appendLine(main + '\n' + detail + '\n' + plan.reason + '\n');
-      output.show(true);
-      job.child = spawn(python, [launcher, root, '--no-open', '--no-pause', '--sync-next-to-pdf', ...flags, main],
-        { cwd: path.dirname(main), env: { ...env, LIQUIDGLASS_PROGRESS: '1' }, detached: process.platform !== 'win32', windowsHide: true });
+      job.child = spawn(python, [launcher, root, '--no-open', '--no-pause', '--sync-next-to-pdf', ...['--engine',plan.engine,plan.shell === true ? '--shell-escape' : plan.shell === 'restricted' ? '--restricted-shell-escape' : '--no-shell-escape'], main],
+        { cwd: path.dirname(main), env: { ...env, LIQUIDGLASS_PROGRESS: '1', max_print_line: '4096' }, detached: process.platform !== 'win32', windowsHide: true });
       const result = await childResult(job.child, line => {
-        if (!line.startsWith('LiquidGlass progress: ')) output.appendLine(line);
+        if (!line.startsWith('LiquidGlass progress: ')&&!line.startsWith('LiquidGlass stage: ')) output.appendLine(line);
         const event = progressFor(line);
-        if (event && !job.canceled) update({ ...event, progress: Math.max(state.progress, event.progress) });
+        if (event && !job.canceled) {
+          const next = tick(state,event);
+          if (line.startsWith('LiquidGlass stage: ') &&
+              (next.phase !== state.phase || next.detail !== state.detail)) {
+            output.appendLine(captions[next.phase] + (next.detail ? ' · ' + next.detail : ''));
+          }
+          update(next);
+        }
       });
       if (job.canceled) return;
       if (result.code !== 0) {
         const log = await fs.readFile(path.join(path.dirname(main), 'build', path.basename(main, '.tex') + '.log'), 'utf8').catch(() => '');
+        if (log) output.appendLine('\n[TeX 日志]\n' + log);
         const physicalRoot = await fs.realpath(root).catch(() => root);
         const records = diagnostics(result.stdout + '\n' + result.stderr + '\n' + log, main).map(record => {
           const local = path.relative(physicalRoot, record.file);
@@ -183,9 +233,12 @@ function activate(context) {
             ? path.join(root, local) : record.file };
         });
         const fallback = (result.stderr.trim() || result.stdout.trim()).split(/\r?\n/).find(line => /Build:|Error|failed/i.test(line)) || '详情见底部输出。';
-        if (!records.length) records.push({ file: main, line: 1, message: fallback });
+        if (!records.length) records.push({ message:fallback });
         const grouped = new Map();
         for (const record of records) {
+          if (!record.file || !record.line) continue;
+          record.link = await fs.stat(record.file).then(stat=>stat.isFile()).catch(()=>false);
+          if (!record.link) continue;
           const line = record.line - 1;
           const item = new vscode.Diagnostic(new vscode.Range(line, 0, line, 1), record.message);
           item.source = 'LiquidGlass';
@@ -193,72 +246,89 @@ function activate(context) {
           grouped.get(record.file).push(item);
         }
         problems.set([...grouped].map(([file, items]) => [vscode.Uri.file(file), items]));
-        update({ phase: 'error', detail, problems: records });
-        output.show(true);
+        update({phase:'error',detail:'',problems:records,ended:Date.now()});
         return;
       }
       lastPdf = main.replace(/\.tex$/i, '.pdf');
-      update({ phase: 'done', progress: 100, detail, pdf: true });
+      output.appendLine(captions.done + ' · ' + lastPdf);
+      update({phase:'done',progress:100,detail:'',pdf:true,ended:Date.now()});
     } catch (error) {
       if (!job.canceled) {
         output.appendLine(error.message);
-        output.show(true);
-        update({ phase: 'error', problems: [{ file: main, line: 1, message: error.message }] });
+        update({phase:'error',problems:[{message:error.message}],ended:Date.now()});
       }
     } finally {
       request = null;
-      update({ busy: false, ...(job.canceled ? { phase: 'canceled', detail: '' } : {}) });
+      update({ busy: false, ...(job.canceled ? { phase:'canceled',detail:'',ended:Date.now() } : {}) });
     }
   }
 
-  async function viewPdf() {
-    if (!lastPdf || !state.pdf) return;
+  async function openPdf(file) {
     const viewer = vscode.extensions.getExtension('james-yu.latex-workshop');
     if (viewer) {
       await viewer.activate();
-      await vscode.commands.executeCommand('vscode.openWith', vscode.Uri.file(lastPdf), 'latex-workshop-pdf-hook');
+      await vscode.commands.executeCommand('vscode.openWith', vscode.Uri.file(file), 'latex-workshop-pdf-hook');
     } else {
-      await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(lastPdf));
+      await vscode.commands.executeCommand('vscode.open', vscode.Uri.file(file));
     }
   }
 
+  const viewPdf = () => lastPdf && state.pdf && openPdf(lastPdf);
+  const studioSettings = registerStudio(context,{
+    output, environment:studioEnvironment, selection:() => selection, launcher:() => prepareLauncher(context), openPdf, build, cancel, viewPdf, publishBuild:publish,
+    python:(root, dir, uri) => pythonFor(root,dir,configuredPython(uri),studioEnvironment())
+  });
+
+  registerMaterialLab(context,{
+    environment:studioEnvironment,
+    python:(root, uri) => pythonFor(root,root,configuredPython(uri),studioEnvironment())
+  });
   context.subscriptions.push(output, problems, { dispose: cancel },
+    vscode.commands.registerCommand('liquidglassLatexStudio.buildPanel',
+      ()=>vscode.commands.executeCommand('liquidglassLatexStudio.sidebar.focus')),
     vscode.window.onDidChangeActiveTextEditor(syncEditor),
-    vscode.commands.registerCommand('liquidglassBuild.build', build),
-    vscode.commands.registerCommand('liquidglassBuild.cancel', cancel),
-    vscode.commands.registerCommand('liquidglassBuild.output', () => output.show(true)),
-    vscode.commands.registerCommand('liquidglassBuild.pdf', viewPdf),
-    vscode.window.registerWebviewViewProvider('liquidglassBuild.sidebar', {
+    vscode.commands.registerCommand('liquidglassLatexStudio.build', build),
+    vscode.commands.registerCommand('liquidglassLatexStudio.cancel', cancel),
+    vscode.commands.registerCommand('liquidglassLatexStudio.output', () => output.show()),
+    vscode.commands.registerCommand('liquidglassLatexStudio.pdf', viewPdf),
+    vscode.window.registerWebviewViewProvider('liquidglassLatexStudio.sidebar', {
       async resolveWebviewView(next) {
         view = next;
-        const media = vscode.Uri.joinPath(context.extensionUri, 'media');
-        next.webview.options = { enableScripts: true, localResourceRoots: [media] };
-        const nonce = randomBytes(16).toString('hex');
-        const html = await fs.readFile(path.join(context.extensionPath, 'media', 'panel.html'), 'utf8');
-        next.webview.html = html.replaceAll('{{NONCE}}', nonce).replaceAll('{{SOURCE}}', next.webview.cspSource)
-          .replace('{{CSS}}', next.webview.asWebviewUri(vscode.Uri.joinPath(media, 'panel.css')).toString())
-          .replace('{{JS}}', next.webview.asWebviewUri(vscode.Uri.joinPath(media, 'panel.js')).toString());
-        next.webview.onDidReceiveMessage(async ({ action, index, engine, shellEscape }) => {
+        const fontScale = bindWebviewFontScale(next.webview);
+        next.webview.html = await renderWebview(context,next.webview,'panel',[['ICON','media/studio-icon.png'],['METER','media/meter.js']]);
+        next.webview.onDidReceiveMessage(async ({ action, index, key, engine, shellEscape, followProject }) => {
           if (action === 'ready') publish();
-          if (action === 'select' && !state.busy && ENGINES.includes(engine) && typeof shellEscape === 'boolean') {
-            selection = buildSelection({ engine, shellEscape });
+          if (action === 'select' && !state.busy && ENGINES.includes(engine) && typeof shellEscape === 'boolean' && typeof followProject === 'boolean') {
+            selection = buildSelection({ engine, shellEscape, followProject });
             publish();
+            studioSettings.settings();
             await context.workspaceState.update(selectionKey, selection);
           }
-          if (action === 'build') await build();
+          if (action === 'studio') await vscode.commands.executeCommand('liquidglassLatexStudio.studio');
+          if (action === 'previewSelection') await vscode.commands.executeCommand('liquidglassLatexStudio.previewSelection');
+          if (action === 'build') await build(uriForBuild());
           if (action === 'cancel') await cancel();
-          if (action === 'output') output.show(true);
+          if (action === 'output') await output.show();
           if (action === 'pdf') await viewPdf();
+          if (action === 'copyPath' && typeof state.paths[key]==='string' && Object.hasOwn(state.paths,key)) {
+            await vscode.env.clipboard.writeText(state.paths[key]);
+            next.webview.postMessage({type:'notice',message:'路径已复制'});
+          }
           const problem = state.problems[index];
-          if (action === 'jump' && problem && Number.isInteger(index)) {
+          if (action === 'jump' && problem?.link && Number.isInteger(index)) {
             const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(problem.file)).catch(() => undefined);
             if (doc) {
               const line = Math.min(doc.lineCount - 1, problem.line - 1);
-              await vscode.window.showTextDocument(doc, { selection: new vscode.Range(line, 0, line, 0) });
+              const selected = new vscode.Range(line,0,line,doc.lineAt(line).text.length);
+              const editor = await vscode.window.showTextDocument(doc,{selection:selected});
+              editor.revealRange(selected,vscode.TextEditorRevealType.InCenterIfOutsideViewport);
             }
           }
         });
-        next.onDidDispose(() => { if (view === next) view = undefined; });
+        next.onDidDispose(() => {
+          fontScale.dispose();
+          if (view === next) view = undefined;
+        });
         syncEditor();
       }
     }));

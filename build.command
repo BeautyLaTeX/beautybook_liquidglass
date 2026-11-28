@@ -6,10 +6,11 @@ if [ "$(uname -s)" != Darwin ]; then
   exit 1
 fi
 lg_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 1
+lg_external_venv="$(dirname -- "$lg_root")/.$(basename -- "$lg_root").venv/bin/python"
 PATH="/Library/TeX/texbin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 export PATH
 lg_python=''
-for lg_candidate in "${LIQUIDGLASS_PYTHON:-}" "$lg_root/.venv/bin/python" python3 /opt/homebrew/bin/python3 /usr/local/bin/python3 /usr/bin/python3; do
+for lg_candidate in "${LIQUIDGLASS_PYTHON:-}" "$lg_root/.venv/bin/python" "$lg_external_venv" python3 /opt/homebrew/bin/python3 /usr/local/bin/python3 /usr/bin/python3; do
   [ -n "$lg_candidate" ] || continue
   if "$lg_candidate" -c 'import sys; sys.exit(sys.version_info < (3, 9))' >/dev/null 2>&1; then
     lg_python="$lg_candidate"
@@ -502,19 +503,21 @@ def glass_hint(main, root):
 
 
 def run_glass(driver, main, engine, shell_escape):
-    candidates = [os.environ.get('LIQUIDGLASS_PYTHON'), sys.executable, '/opt/homebrew/bin/python3', '/usr/local/bin/python3', 'python3']
+    candidates = [os.environ.get('LIQUIDGLASS_PYTHON'), str(main.parent / '.venv' / 'bin' / 'python'), sys.executable, '/opt/homebrew/bin/python3', '/usr/local/bin/python3', 'python3']
+    optics = (Path(driver).parent / 'liquidglass_optics.py').is_file()
     python = None
+    dependencies = 'from PIL import Image, ImageCms; import numpy' if optics else 'from PIL import Image, ImageCms'
     for candidate in dict.fromkeys(p for p in candidates if p):
         try:
-            result = subprocess.run([candidate, '-c', 'from PIL import Image, ImageCms'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            result = subprocess.run([candidate, '-c', dependencies], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except OSError:
             continue
         if result.returncode == 0:
             python = candidate
             break
     if python is None:
-        raise RuntimeError('Glass builds need Python with Pillow. Run: python3 -m pip install Pillow')
-    result = subprocess.run([python, str(driver), str(main), '--engine', engine,
+        raise RuntimeError('Glass builds need Python with Pillow and NumPy.' if optics else 'Glass builds need Python with Pillow.')
+    result = subprocess.run([python, '-B', str(driver), str(main), '--engine', engine,
                              SHELL_ARGUMENTS[shell_escape]], cwd=main.parent)
     if result.returncode:
         # A preamble heuristic can be fooled by an unused conditional import.
@@ -534,6 +537,7 @@ def launcher_main(root, arguments=None):
     parser.add_argument('--list', action='store_true', help='List main documents without building')
     parser.add_argument('--recursive', action='store_true', help='Include subfolder main documents')
     parser.add_argument('--engine', choices=['auto', 'lualatex', 'xelatex', 'pdflatex'], default='auto')
+    parser.add_argument('--glass', action='store_true', help='Select the LiquidGlass driver explicitly')
     external = parser.add_mutually_exclusive_group()
     external.add_argument('--shell-escape', dest='shell_escape', action='store_true')
     external.add_argument('--no-shell-escape', dest='shell_escape', action='store_false')
@@ -591,7 +595,7 @@ def build_document(main, root, args):
     engine, shell, _ = launcher_options(main, args, root)
     driver = find_driver(main, root)
     print(f'\n构建 / Building: {main.name}\nEngine: {engine}; shell escape: {shell}', flush=True)
-    if glass_hint(main, root):
+    if args.glass or glass_hint(main, root):
         if driver is None:
             raise RuntimeError('This project uses liquidglass. Copy lgbuild.py, liquidglass.sty and liquidglass-assets/ into the project, or install the complete TDS package. A .command file alone does not contain the glass runtime.')
         pdf = run_glass(driver, main, engine, shell)

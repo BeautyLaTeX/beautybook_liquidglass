@@ -5,6 +5,7 @@
 \RequirePackage{minted}
 \RequirePackage{adjustbox}
 \RequirePackage{fvextra}
+\RequirePackage{iftex}
 \RequirePackage[most]{tcolorbox}
 \tcbuselibrary{skins,breakable,minted}
 % =========================================================
@@ -224,14 +225,8 @@
   \end{tikzpicture}%
 }
 
-% A page cut has an open rim and clips the inset panel at the same edge.
-% 分页断口沿用 tcolorbox 的裁切，内层面板也延伸至断口。
-\newcommand*\beautybook@macframeclip{%
-  \ifdefstring{\tcb@split@state}{unbroken}{%
-    \clip[rounded corners=\MacRadius]
-      (frame.south west) rectangle (frame.north east);%
-  }{\tcb@clip@frame}%
-}
+% Use the same frame path as the backdrop, including individual corners and page cuts.
+\newcommand*\beautybook@macframeclip{\tcb@clip@frame}
 
 \newcommand*\beautybook@macpanelnodes{%
   \def\beautybook@macpaneltop{\dimexpr-\MacBarHeight-\MacPanelTopGap\relax}%
@@ -250,25 +245,39 @@
   \coordinate (MacPanelSW) at (MacPanelNW |- MacPanelSE);%
 }
 
-% Keep the two original rim strokes on a full window. For split pieces,
-% tcolorbox uses the same corner states as the glass backdrop and shadow.
-% 整盒使用原有的双线边缘，分页片段则与底图和阴影共用圆角规则。
+% The original two strokes follow the same corner settings as the backdrop.
 \newcommand*\beautybook@macrim[4]{%
-  \ifdefstring{\tcb@split@state}{unbroken}{%
-    \draw[rounded corners=\MacRadius,#1,opacity=#2,line width=#3]
-      ([xshift=#4,yshift=#4]frame.south west) rectangle
-      ([xshift=-#4,yshift=-#4]frame.north east);%
-  }{%
-    \csname tcb@border@\tcb@split@state\endcsname{#3}{#4-(#3)/2}{draw=#1,draw opacity=#2}%
-  }%
+  \csname tcb@border@\tcb@split@state\endcsname{#3}{#4-(#3)/2}%
+    {overlay,draw=#1,draw opacity=#2}%
 }
-\newcommand*\beautybook@maclightrim{%
+\newcommand*\beautybook@maclegacyrim[1]{%
+  \ifcsundef{lg@ifsharedrim}{#1}{%
+    \iflg@painted
+      \lg@ifsharedrim{\begingroup\let\lg@windowstroke\beautybook@macrim\lg@rimpaint\endgroup}{#1}%
+    \else#1\fi}%
+}
+\newcommand*\beautybook@maclightrim{\beautybook@maclegacyrim{%
   \beautybook@macrim{white}{.72}{.70pt}{.35pt}%
   \beautybook@macrim{MacLOuter}{.36}{.40pt}{.12pt}%
-}
-\newcommand*\beautybook@macdarkrim{%
+}}
+\newcommand*\beautybook@macdarkrim{\beautybook@maclegacyrim{%
   \beautybook@macrim{white}{.12}{.72pt}{.35pt}%
   \beautybook@macrim{MacDOuter}{.32}{.42pt}{.12pt}%
+}}
+\newcommand*\beautybook@ifmaclens[2]{%
+  \ifcsundef{lg@ifsharedrim}{#2}{%
+    \iflg@painted
+      \ifdefstring{\lg@opticsprofile}{reading-lens}{\ifdefstring{\lg@rimstyle}{classic}{#2}{#1}}{#2}%
+    \else#2\fi}%
+}
+\newcommand*\beautybook@ifmacwindow[2]{%
+  \ifcsundef{lg@materialpreset}{#2}{%
+    \iflg@painted\ifdefstring{\lg@materialpreset}{reading-window}{#1}{#2}\else#2\fi}%
+}
+\newcommand*\beautybook@macbarshine[1]{%
+  \draw[white,opacity=#1,line width=.40pt,line cap=round]
+    ($(frame.north west)!.055!(frame.north east)+(0,-.55mm)$) --
+    ($(frame.north west)!.89!(frame.north east)+(0,-.55mm)$);%
 }
 
 % The title depth belongs only to the first piece. Use a real break padding
@@ -277,6 +286,7 @@
 \tcbset{beautybook code breaks/.style={
   breakable,bottomsep at break=0mm,
   pad after break={\MacPanelTopGap+2.4mm},
+  code={\let\lg@earlyrim\@empty},
 }}
 
 % =========================================================
@@ -361,19 +371,21 @@
 \newcommand{\MacLightChrome}[1]{%
   \begin{scope}%
     \beautybook@macframeclip
+    \beautybook@ifmacwindow{\def\MacBarOpacity{.76}}{%
+      \beautybook@ifmaclens{\def\MacBarOpacity{.44}}{\def\MacBarOpacity{.988}}}%
 
     \shade[
         shading=MacLightBarGlass,
-        opacity=.988
+        opacity=\MacBarOpacity
     ]
         (frame.north west)
         rectangle
         ([yshift={-\MacBarHeight}]frame.north east);%
 
-    \draw[white,opacity=.80,line width=.60pt]
+    \beautybook@ifmacwindow{\beautybook@macbarshine{.48}}{%
+      \beautybook@ifmaclens{}{\draw[white,opacity=.80,line width=.60pt]
         ([xshift=\MacRadius,yshift=-.55mm]frame.north west)
-        --
-        ([xshift=-\MacRadius,yshift=-.55mm]frame.north east);%
+        -- ([xshift=-\MacRadius,yshift=-.55mm]frame.north east);}}%
 
     \draw[MacLHair,opacity=.24,line width=.32pt]
         ([yshift={-\MacBarHeight}]frame.north west)
@@ -471,22 +483,38 @@
 % =========================================================
 % Dark title bar and rim / 深色标题栏与边缘
 % =========================================================
+\newcommand*\beautybook@iffrost[2]{%
+  \ifcsdef{lg@iffrost}{\lg@iffrost{#1}{#2}}{#2}%
+}
+% One vector glyph run, with a narrow dark stroke to separate the white
+% title from the bright parts of the glass without tinting the title bar.
+\newcommand*\beautybook@titleliteral[1]{%
+  \ifXeTeX\special{pdf:literal direct #1}%
+  \else\ifLuaTeX\pdfextension literal direct {#1}%
+  \else\ifPDFTeX\ifnum\pdfoutput>0\pdfliteral direct {#1}\fi\fi\fi\fi
+}
+\newcommand*\beautybook@frosttitle[1]{%
+  \beautybook@iffrost{%
+    \beautybook@titleliteral{q 0.18 w 1 j 0.12 0.18 0.20 RG 2 Tr}%
+    #1%
+    \beautybook@titleliteral{0 Tr Q}%
+  }{#1}%
+}
 \newcommand{\MacDarkChrome}[1]{%
   \begin{scope}%
     \beautybook@macframeclip
-
-    \shade[
-        shading=MacDarkBarGlass,
-        opacity=.995
-    ]
+    \beautybook@iffrost{%
+      \shade[top color=white,bottom color=white!35!black,opacity=.09]
         (frame.north west)
-        rectangle
-        ([yshift={-\MacBarHeight}]frame.north east);%
-
-    \draw[white,opacity=.095,line width=.60pt]
+        rectangle ([yshift={-\MacBarHeight}]frame.north east);%
+    }{%
+      \beautybook@ifmaclens{\def\MacBarOpacity{.58}}{\def\MacBarOpacity{.995}}%
+      \shade[shading=MacDarkBarGlass,opacity=\MacBarOpacity]
+        (frame.north west)
+        rectangle ([yshift={-\MacBarHeight}]frame.north east);%
+      \beautybook@ifmaclens{}{\draw[white,opacity=.095,line width=.60pt]
         ([xshift=\MacRadius,yshift=-.55mm]frame.north west)
-        --
-        ([xshift=-\MacRadius,yshift=-.55mm]frame.north east);%
+        -- ([xshift=-\MacRadius,yshift=-.55mm]frame.north east);}}%
 
     \draw[black,opacity=.14,line width=.28pt]
         ([yshift={-\MacBarHeight}]frame.north west)
@@ -501,14 +529,15 @@
            frame.north west)
       {\MacTrafficLights};%
 
-  \node[anchor=center,inner sep=0pt,text=MacDTitle]
+  \beautybook@iffrost{\def\MacWindowTitle{white}}{\def\MacWindowTitle{MacDTitle}}%
+  \node[anchor=center,inner sep=0pt,text=\MacWindowTitle]
       at ([yshift={\dimexpr-\MacBarHeight/2\relax}]frame.north)
       {%
         \adjustbox{
             max width={\dimexpr\MacWindowWidth-60mm\relax},
             max height=4.8mm
         }{%
-            \sffamily\bfseries\normalsize\strut #1%
+            \sffamily\bfseries\normalsize\strut\beautybook@frosttitle{#1}%
         }%
       };%
 
@@ -585,9 +614,34 @@
 % ...
 % \end{macdarkcode}
 % =========================================================
+% Keep the native minted fill colour. A fine light edge and a clearer
+% CJK face separate the muted Monokai comment from the frosted backdrop.
+\newcommand*\beautybook@darkcomment[1]{%
+  {\ifcsdef{CJKfamily}{\ifcsdef{CJKsfdefault}{\CJKfamily{\CJKsfdefault}}{}}{}%
+   \beautybook@titleliteral{q 0.18 w 1 j 0.94 0.93 0.88 RG 2 Tr}%
+   #1%
+   \beautybook@titleliteral{0 Tr Q}}%
+}
+\newcommand*\beautybook@commenttoken[1]{%
+  \ifcsdef{PYG@tok@#1}{%
+    \csappto{PYG@tok@#1}{\let\PYG@ff\beautybook@darkcomment}%
+  }{}%
+}
+\newcommand*\beautybook@nativecodecontrast{%
+  \ifdefstring{\lg@opticsprofile}{reading-window-code}{%
+    \ifcsdef{minted@patch@PygmentsStyledef}{%
+      \apptocmd\minted@patch@PygmentsStyledef{%
+        \forcsvlist\beautybook@commenttoken{c,c1,cm,cp,cs,ch,cpf}%
+      }{}{}%
+    }{}%
+  }{}%
+}
+\tcbset{beautybook dark listing/.code={\let\beautybook@darklisting\@empty}}
 \newtcblisting{macdarkcode}[3][]{%
   enhanced jigsaw,
   beautybook code breaks,
+  beautybook dark listing,
+  before upper app={\beautybook@nativecodecontrast},
   listing only,
   listing engine=minted,
   minted language=#2,

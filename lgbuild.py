@@ -36,7 +36,8 @@ try:
 except ImportError:
     raise SystemExit("LiquidGlass needs Pillow: python3 -m pip install Pillow")
 
-VERSION = "1.6.3"
+VERSION = "2.0.2"
+DEFAULT_DPI = 200
 SHELL_FLAGS = {False: "-no-shell-escape", "restricted": "-shell-restricted", True: "-shell-escape"}
 SP_PER_INCH = 65536 * 72.27
 INPUT_LIMIT = 128 * 1024 * 1024
@@ -76,6 +77,42 @@ class Pane:
     sheeny: float = .22
     rolloff: float = 0.0
     mask: float = 0.0
+
+
+@dataclass(frozen=True)
+class OpticalGeometry:
+    profile: str
+    shape: str
+    corners: tuple[int, int, int, int]
+    glint: tuple[int, float] | None = None
+
+
+def optical_records(path: Path, panes: list[Pane]) -> dict[int, OpticalGeometry]:
+    fragments = {pane.fragment for pane in panes}
+    result = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("LGOPT|"):
+            continue
+        try:
+            _, fid, profile, shape, nw, ne, sw, se, *glint_fields = line.split("|")
+            fragment = int(fid)
+            corners = (int(nw), int(ne), int(sw), int(se))
+            if (profile not in {"regular", "clear", "reading", "reading-lens", "reading-window-dark",
+                                "reading-window-code"}
+                    or shape not in {"rounded", "notched"}
+                    or fragment not in fragments or fragment in result or min(corners) < 0):
+                raise ValueError
+            glint = None
+            if glint_fields:
+                width_text, opacity_text = glint_fields
+                width, opacity = int(width_text), float(opacity_text)
+                if profile != "reading-lens" or not (0 <= width <= 3 * 65536 and 0 <= opacity <= 1):
+                    raise ValueError
+                glint = (width, opacity)
+        except ValueError as exc:
+            raise BuildError(f"Invalid optical geometry: {line[:160]}") from exc
+        result[fragment] = OpticalGeometry(profile, shape, corners, glint)
+    return result
 
 
 def number(value, low, high, label):
@@ -213,14 +250,18 @@ def sources_for(panes, project: Path, package: Path):
     chosen, counters, logical_sources = {}, {}, {}
     for pane in panes:
         token = pane.source
+        if token == "@reading":
+            token = "@frost" if pane.mode == "dark" else "@silver"
         group = (pane.logical, token)
         if group in logical_sources:
             chosen[pane.fragment] = logical_sources[group]
             continue
         if token == "@page":
             selected = None
-        elif token in {"@default", "@silver"}:
-            selected = asset_directory(package) / {"@default": "default.png", "@silver": "frost-silver.png"}[token]
+        elif token in {"@default", "@silver", "@frost"}:
+            selected = asset_directory(package) / {
+                "@default": "default.png", "@silver": "frost-silver.png", "@frost": "frost-chroma.png",
+            }[token]
         elif token.startswith("@folder:") or token.startswith("@list:"):
             if token.startswith("@folder:"):
                 directory = Path(token[8:]).expanduser()
@@ -536,7 +577,19 @@ def run_auxiliary_tools(output: Path, project: Path, job: str, state: dict, bibl
         signature = digest.hexdigest()
         if state.get(key) == signature:
             return
-        result = subprocess.run([find_tool(name), *arguments], cwd=working_directory or project, env=process_env or env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        command = [find_tool(name), *arguments]
+        directory = working_directory or project
+        tool_env = process_env or env
+        result = subprocess.run(command, cwd=directory, env=tool_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if (name == "biber" and sys.platform == "darwin" and result.returncode == 25
+                and b"Found BibTeX data source" in result.stdout):
+            # Packaged Biber can exit during Unicode table initialization if its
+            # shared PAR cache is incomplete. Retry in an isolated cache once.
+            with tempfile.TemporaryDirectory(prefix="liquidglass-biber-") as biber_cache:
+                retry_env = {**(tool_env or os.environ), "PAR_GLOBAL_TMPDIR": biber_cache}
+                retry = subprocess.run(command, cwd=directory, env=retry_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            output_text = result.stdout + b"\nRetry with an isolated Biber cache:\n" + retry.stdout
+            result = subprocess.CompletedProcess(command, retry.returncode, output_text)
         atomic_bytes(output / (key + ".console.txt"), result.stdout)
         if result.returncode:
             tail = result.stdout.decode("utf-8", errors="replace").splitlines()[-18:]
@@ -600,7 +653,14 @@ def render_pages(pdf, panes, directory, dpi):
     return result
 
 
-def generate(panes, capture_pdf, project, directory, dpi, package):
+def generate(panes, capture_pdf, project, directory, dpi, package, optical_geometry=None):
+    optical_geometry = optical_geometry or {}
+    if optical_geometry:
+        try:
+            import liquidglass_optics
+        except ImportError as exc:
+            raise BuildError(f"Python {sys.executable} could not load the optical renderer: {exc}. "
+                             "Keep liquidglass_optics.py and lgbuild.py together and use a Python environment with Pillow and NumPy.") from exc
     selected = sources_for(panes, project, package)
     page_images = render_pages(capture_pdf, [p for p in panes if selected[p.fragment] is None], directory, dpi)
     pixel_factor = dpi / SP_PER_INCH
@@ -625,7 +685,10 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
         if source_path is None:
             continue
         image = open_image(source_path)
-        if group[0].imagefit == "stretch":
+        prepared_frost = (group[0].mode == "dark"
+                          and group[0].source in {"@reading", "@frost"}
+                          and source_path.name == "frost-chroma.png")
+        if group[0].imagefit == "stretch" or prepared_frost:
             # Keep the complete texture once per logical box, including long boxes.
             canvas = image.resize((width, total), Image.Resampling.LANCZOS)
         else:
@@ -639,6 +702,7 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
         old_index = {}
     index = {}
     renderer_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    optical_hash = hashlib.sha256(Path(liquidglass_optics.__file__).read_bytes()).hexdigest() if optical_geometry else None
     report_progress = os.environ.get("LIQUIDGLASS_PROGRESS") == "1"
     progress_stride = max(1, math.ceil(len(panes) / 18))
     for completed, pane in enumerate(panes, 1):
@@ -647,6 +711,9 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
         if width * height > 24_000_000:
             raise BuildError(f"Glass fragment {pane.fragment} exceeds 24 million output pixels")
         margin = math.ceil((pane.blur * 4 + pane.refraction * 5) * dpi / 25.4) + 3
+        contour = optical_geometry.get(pane.fragment)
+        if contour and (contour.profile == "reading-lens" or contour.profile in liquidglass_optics.FROST_WINDOWS):
+            margin = max(margin, liquidglass_optics.sampling_halo(pane, dpi, contour.profile))
         path = selected[pane.fragment]
         if path is None:
             page = page_images[pane.page]
@@ -662,8 +729,12 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
             source = clamped_crop(canvas, (left - margin, top - margin, left + width + margin, top + height + margin))
             source_name = str(path.resolve())
         target = directory / f"pane-{pane.fragment}.png"
-        input_hash = hashlib.sha256(source.tobytes() + json.dumps({"pane": asdict(pane), "dpi": dpi, "renderer": renderer_hash,
-                                                                "sheen_geometry": sheen_geometry[pane.fragment]}, sort_keys=True).encode()).hexdigest()
+        source_hash = hashlib.sha256(source.tobytes()).hexdigest()
+        input_hash = hashlib.sha256(json.dumps({"pane": asdict(pane), "dpi": dpi, "renderer": renderer_hash,
+                                               "optical_version": optical_hash if contour else None,
+                                               "contour": asdict(contour) if contour else None,
+                                               "source": source_hash, "sheen_geometry": sheen_geometry[pane.fragment]},
+                                              sort_keys=True).encode()).hexdigest()
         previous = old_index.get(str(pane.fragment), {})
         cached = False
         if previous.get("input_hash") == input_hash and target.is_file():
@@ -678,8 +749,19 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
         if cached:
             ratio, adaptive = previous["contrast_min"], previous["adaptive_tint"]
         else:
-            image, ratio, adaptive = material(source, pane, width, height, margin, dpi,
-                                               sheen_geometry[pane.fragment])
+            if (contour and contour.profile in liquidglass_optics.FROST_WINDOWS
+                    and pane.source in {"@reading", "@frost"} and path is not None):
+                # The reference-matched default is already optically filtered.
+                surface = source.crop((margin, margin, margin + width, margin + height))
+                image, ratio, adaptive = liquidglass_optics.frost_ink_contrast(surface, pane.contrast)
+            elif contour:
+                image, ratio, adaptive = liquidglass_optics.render(source, pane, width, height, margin, dpi,
+                                                                   sheen_geometry[pane.fragment], contour, contrast_guard, TEXT[pane.mode])
+            else:
+                image, ratio, adaptive = material(source, pane, width, height, margin, dpi,
+                                                   sheen_geometry[pane.fragment])
+            if contour and contour.profile == liquidglass_optics.CODE_WINDOW:
+                image, ratio, adaptive = liquidglass_optics.frost_code_contrast(image, pane, dpi)
             stream = io.BytesIO()
             image.save(stream, format="PNG", compress_level=6)
             data = stream.getvalue()
@@ -692,7 +774,9 @@ def generate(panes, capture_pdf, project, directory, dpi, package):
             rf"\expandafter\gdef\csname lg@width@{pane.fragment}\endcsname{{{pane.width}}}",
             rf"\expandafter\gdef\csname lg@height@{pane.fragment}\endcsname{{{pane.height}}}",
         ])
-        report.append({**asdict(pane), "resolved_source": source_name, "pixels": [width, height], "contrast_min": round(ratio, 4), "adaptive_tint": round(adaptive, 5), "sha256": digest, "file": relative, "cache_hit": cached})
+        report.append({**asdict(pane), "resolved_source": source_name, "pixels": [width, height], "contrast_min": round(ratio, 4), "adaptive_tint": round(adaptive, 5), "sha256": digest, "file": relative, "cache_hit": cached,
+                       "renderer": "optical" if contour else "legacy", "source_pixels_sha256": source_hash,
+                       "optical_geometry": asdict(contour) if contour else None})
         if report_progress and (completed == len(panes) or completed % progress_stride == 0):
             print(f"LiquidGlass progress: render {completed}/{len(panes)}", flush=True)
     atomic_bytes(index_file, (json.dumps(index, sort_keys=True, indent=2) + "\n").encode())
@@ -835,6 +919,7 @@ def staged_build(args, main, workspace):
     atomic_bytes(capture / (job + ".lgi.tex"), b"% Capture has no foreground materials.\n")
     engine_name, shell_escape = resolve_options(main, args)
     engine = find_tool(engine_name)
+    use_optics = getattr(args, "renderer", "auto") != "legacy"
     package = Path(__file__).resolve().parent
     env = compile_environment(package)
     bibliography = getattr(args, "bibliography", "auto")
@@ -850,23 +935,27 @@ def staged_build(args, main, workspace):
                         workspace / f"capture-{capture_pass + 1}.console.txt", env, shell_escape)
             tools_changed = run_auxiliary_tools(capture, project, job, auxiliary_state,
                                                 bibliography, index, env)
-            panes = parse_records(capture / f"{job}.lgr", capture / f"{job}.aux")
+            capture_records = capture / f"{job}.lgr"
+            panes = parse_records(capture_records, capture / f"{job}.aux")
+            geometry = optical_records(capture_records, panes) if use_optics else {}
             if report_progress:
                 print(f"LiquidGlass progress: capture {capture_pass + 1}", flush=True)
-            if previous == panes and not tools_changed:
+            if previous == (panes, geometry) and not tools_changed:
                 break
-            previous = panes
+            previous = (panes, geometry)
         else:
             raise BuildError("Capture geometry did not stabilize after six passes")
         print(f"Rendering {len(panes)} pane fragments at {args.dpi} dpi", flush=True)
         report, mapping, changed = generate(panes, capture / f"{job}.pdf", project,
-                                            materials, args.dpi, package)
+                                            materials, args.dpi, package, geometry)
         atomic_bytes(final / f"{job}.lgi.tex", mapping.encode("utf-8"))
         copy_references(capture, final, job)
         print("Composing final PDF", flush=True)
         run_compile(engine, main, job, final, False, workspace / "final.console.txt", env, shell_escape)
-        final_records = parse_records(final / f"{job}.lgr", final / f"{job}.aux")
-        if panes == final_records:
+        final_record_path = final / f"{job}.lgr"
+        final_records = parse_records(final_record_path, final / f"{job}.aux")
+        final_geometry = optical_records(final_record_path, final_records) if use_optics else {}
+        if panes == final_records and geometry == final_geometry:
             payload = {"version": VERSION, "engine": engine_name, "dpi": args.dpi,
                        "document": main.name, "stable": True, "attempts": attempt,
                        "panes": report, "generated": changed, "reused": len(panes) - changed,
@@ -923,7 +1012,11 @@ def main():
     parser.add_argument("document", type=Path, help="Main .tex file")
     parser.add_argument("--engine", choices=("auto", "lualatex", "xelatex", "pdflatex"), default="auto",
                         help="Engine: CLI > per-document setting > TeX program directive > global setting > lualatex")
-    parser.add_argument("--dpi", type=int, default=144, help="Material resolution, 72..300 (default 144)")
+    parser.add_argument("--dpi", type=int, default=DEFAULT_DPI,
+                        help="Material resolution, 72..300 ppi (default %(default)s)")
+    parser.add_argument("--version", action="version", version=f"LiquidGlass {VERSION}")
+    parser.add_argument("--renderer", choices=("auto", "legacy"), default="auto",
+                        help="Use shape-aware materials where selected by TeX, or force the 1.6.x raster path")
     parser.add_argument("--bibliography", choices=("auto", "none"), default="auto", help="Run Biber/BibTeX for standard bibliography data (default auto)")
     parser.add_argument("--index", choices=("auto", "none"), default="auto", help="Run MakeIndex for standard index files (default auto)")
     external = parser.add_mutually_exclusive_group()

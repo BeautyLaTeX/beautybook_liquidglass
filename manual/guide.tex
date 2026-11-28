@@ -18,7 +18,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\sffamily\color{GuideTeal}\textbf{LIQUIDGLASS}}
-\fancyhead[R]{\small\sffamily\color{GuideGray}使用说明\enspace /\enspace 1.6.3}
+\fancyhead[R]{\small\sffamily\color{GuideGray}使用说明\enspace /\enspace 2.0.2}
 \fancyfoot[R]{\small\color{GuideTeal}\thepage}
 \renewcommand\headrulewidth{.3pt}
 \ctexset{
@@ -63,7 +63,7 @@
 \begin{document}
 \thispagestyle{empty}
 \vspace*{5mm}
-{\large\sffamily\bfseries\color{GuideTeal} LIQUIDGLASS\hfill 1.6.3}\par
+{\large\sffamily\bfseries\color{GuideTeal} LIQUIDGLASS\hfill 2.0.2}\par
 {\fontsize{30pt}{37pt}\selectfont\bfseries 液态玻璃使用说明}\par
 {\large\color{GuideGray} 从第一个磨砂盒，到逐项调光和圆角}\par
 \vspace{3mm}
@@ -78,8 +78,8 @@
 \end{verbatim}
 
 \subsection*{把盒子放进自己的文档}
-把以 \Code{liquidglass} 命名的全部 \Code{.sty} 和 \Code{.tex}，以及
-\Code{lgbuild.py}、\Code{build.command}、\Code{liquidglass-assets/} 放在主文档旁。
+把以 \Code{liquidglass} 命名的宏包、材质模块和素材目录放在主文档旁，再复制 \Code{lgbuild.py}。
+在 macOS 上可一并复制 \Code{build.command}。
 下面这段可直接写进普通文档。
 \begin{verbatim}
 \usepackage{liquidglass}        % 导言区
@@ -91,14 +91,32 @@
 \end{verbatim}
 
 \subsection*{第一次配置编译环境}
-准备 TeX Live 或 MacTeX、Python 3.9 或更新版，以及 Pillow。
+准备 TeX Live 或 MacTeX、Python 3.9 或更新版，以及 Pillow 和 NumPy。
 用下列命令在解压目录建立独立的 Python 环境。启动器可自动找到本目录的
 \Code{.venv}。采样页面或使用 PDF 底图时还需要 Poppler 的 \Code{pdftoppm}。
 \begin{verbatim}
 python3 -m venv .venv
-.venv/bin/python -m pip install Pillow
+.venv/bin/python -m pip install -r liquidglass-requirements.txt
 \end{verbatim}
 \textcolor{GuideGray}{直接运行一次 LaTeX 可看预览。正式构建会做定位、材质生成和合成，才能看到完整的模糊、柔光与取景效果。}
+
+\clearpage
+\section{2.0 光学材质}
+TeX 为每个片段记录外轮廓、有效圆角、页坐标与分页状态。构建器由轮廓计算有符号距离场与表面法线，
+通过折射近似对底图做逐像素逆向取样。直边、圆角和 Beautybook 的凹圆角因此具有各自的入射方向。
+
+Pillow 负责解码、ICC 转换与 PNG 输出。NumPy 在线性光中计算模糊、薄膜、反光、颗粒和亮部。
+\Code{clear} 的边缘保留更多底图细节，\Code{reading} 的正文区保持柔和。分页切口沿盒子的两侧继续，
+只有实际首尾才绘制水平边的光学反光。PDF 继续使用 TeX 原生排版与矢量轮廓。
+
+\Code{lg material=reading-lens} 采用银蓝阅读内区、白色方向高光与双层柔影。
+圆角的受光位置由表面法线和光源方向决定。折射限于约 2 mm 的受光边缘，底缘延续阅读面。
+\Code{lg rim width} 和 \Code{lg rim opacity} 同时调节各边的高光。
+\Code{lg rim=hairline} 单独使用矢量细线，可用 \Code{lg rim color} 改色。
+
+用 \Code{lg renderer=legacy} 可在单盒或全局设置中保留旧材质，或给构建器添加 \Code{--renderer legacy}。
+\Code{reference} 与 \Code{opaque} 仍采用原版路径。\Code{lg refraction} 在光学预设中按材质换算有效厚度，
+相同参数与 1.6.x 可以产生不同的边缘位移。
 
 \clearpage
 \section{从类别找到参数}
@@ -215,7 +233,7 @@ Beautybook 的阅读预设见后面的接入说明。
 \GuideEntry{lg contact blur}{lg contact blur=4mm}{0–10 mm}{.6mm（soft）}{改变贴边暗线的扩散范围。需开启接触阴影。} & \GuideFigure{48} \\
 \GuideEntry{lg contact yshift}{lg contact yshift=2mm}{−10 到 10 mm}{−.3mm（soft）}{接触阴影纵移。正值向上。需开启接触阴影。} & \GuideFigure{49} \\
 \GuideEntry{lg contact spread}{lg contact spread=2.5mm}{−2 到 5 mm}{0mm（soft）}{改变接触阴影轮廓的范围。需开启接触阴影。} & \GuideFigure{50} \\
-\GuideEntry{lg shadow profile}{lg shadow profile=smooth}{classic / smooth}{classic（cloud 为 smooth）}{平滑模式降低外侧阴影梯度突变，并控制叠加后的不透明度。} & \GuideFigure{54} \\
+\GuideEntry{lg shadow profile}{lg shadow profile=smooth}{classic / smooth / contour}{classic（float 为 contour）}{图中对照经典与平滑。轮廓渐变在 PDF 透明组内累积衰减，再应用该层的投影强度。} & \GuideFigure{54} \\
 \GuideEntry{lg contact xshift}{lg contact xshift=2mm}{−10 到 10 mm}{跟随宽阴影}{只移动接触层。lg contact follows shadow 恢复跟随。} & \GuideFigure{55} \\
 \end{EffectTable}
 \clearpage
@@ -225,6 +243,7 @@ Beautybook 的阅读预设见后面的接入说明。
 \GuideEntry{lg material}{lg material=regular}{regular / clear / opaque / reading / reference}{定理盒为 reading}{复杂图片适合 regular，细节清晰的图片可试 clear。reference 保留底图。} & \GuideFigure{52} \\
 \GuideEntry{lg mask}{lg mask=.17}{0–1}{0（reading 为 .17）}{沿整个逻辑盒从左上向右下增加主题蒙色，跨页时保持连贯。} & \GuideFigure{51} \\
 \GuideEntry{不透明阅读}{lg material=opaque}{材质预设}{按需启用}{适合浅色输出与复杂背景上的高可读正文。图中和 reading 比较。} & \GuideFigure{56} \\
+\GuideEntry{银蓝悬浮阅读}{lg material=reading-lens}{独立可选}{方向高光 .70pt}{正文沿用 reading。细高光随光向渐隐，外侧以双层柔影托起。} & \GuideFigure{57} \\
 \end{EffectTable}
 
 \Needspace{150mm}
@@ -342,7 +361,8 @@ cloud 为 1.35\,mm、$-.26$\,mm，其余为 .6\,mm、$-.3$\,mm。各预设接触
 
 \begin{ReferenceTable}{}
 \textbf{接口} & \textbf{用途} \\
-\Code{\BeautyGlassDefault[...]} & 载入阅读预设。底图使用 \Code{@silver}，悬浮阴影用 \Code{lg lift=cloud}。深色盒按原主题处理同一底图。 \\
+\Code{\BeautyGlassDefault[...]} & 载入 \Code{reading-window} 与 \Code{float} 柔影。\Code{@reading} 在浅色时选银蓝底图，在深色时选照片磨砂底图。 \\
+\Code{\BeautyGlassReading[...]} & 载入原银蓝 \Code{reading}、\Code{cloud} 柔影与原有深色主题参数。 \\
 \Code{\BeautyGlassSetup{...}} & 在预设之后追加玻璃参数。 \\
 \Code{\BeautyGlassBackground{...}} & 在预设之后换源图。 \\
 \Code{\BeautyGlassOn} & 打开后续正文盒子的自动接入。\Code{\mainmatter} 会打开。 \\
@@ -352,6 +372,9 @@ cloud 为 1.35\,mm、$-.26$\,mm，其余为 .6\,mm、$-.3$\,mm。各预设接触
 
 中式 \Code{fancybox} 的外框、角饰与底图裁切共用原生半径，可用 \Code{ys/frame/radius} 调整。
 独立文档直接使用卷边定理环境，就会载入新版阅读材质和悬浮阴影。
+
+模板的 \Code{macdarkcode} 用白字标题与 \Code{minted} 的原生 Monokai 配色。
+代码区减光独立于语法高亮，从标题栏内渐入。
 
 \clearpage
 \subsection{构建与项目设置}
@@ -365,7 +388,7 @@ python3 lgbuild.py example.tex --engine xelatex --dpi 175
 \Code{build.command} & macOS 菜单或指定主文件。\Code{--list} 列文件，\Code{--recursive} 搜子目录，
 \Code{--no-open} 只生成 PDF，\Code{--sync-next-to-pdf} 另存同目录的定位文件。
 \Code{--keep-window} 或 \Code{--no-pause} 保留终端。 \\
-\Code{lgbuild.py} & 可从命令行直接调用，分辨率 \Code{--dpi} 范围 72–300，默认 144。
+\Code{lgbuild.py} & 可从命令行直接调用，分辨率 \Code{--dpi} 范围 72–300，默认 200。
 \Code{--bibliography} 与 \Code{--index} 接受 \Code{auto}、\Code{none}，控制相应辅助工具。 \\
 两个入口通用 & \Code{--engine} 取 \Code{auto}、\Code{xelatex}、\Code{lualatex}、\Code{pdflatex}。
 \Code{--shell-escape}、\Code{--restricted-shell-escape} 和 \Code{--no-shell-escape} 分别选择完整、受限或关闭外部命令权限。默认关闭。 \\

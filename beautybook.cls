@@ -1,5 +1,6 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{beautybook}[23-07-2024 V10.1 beautybook Class]
+% Upstream Beautybook class header: 2024/07/23 V10.1.
+\ProvidesClass{beautybook}[2026/11/28 v7.0.1 Beautybook LiquidGlass template]
 % Base class and option forwarding / 基础文类与选项传递
 \DeclareKeys{% = \DeclareKeys[autoclass]
    lang .choice: ,

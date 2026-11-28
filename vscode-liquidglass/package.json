@@ -1,42 +1,158 @@
 {
-  "name": "liquidglass-build",
-  "displayName": "LiquidGlass Build",
-  "description": "Build Beautybook, LiquidGlass and ordinary LaTeX from a visual VS Code sidebar.",
+  "name": "liquidglass-latex-studio",
+  "displayName": "LiquidGlass LaTeX Studio",
+  "description": "Design LiquidGlass material styles in real time and follow every LaTeX build stage in VS Code.",
   "publisher": "BeautyLaTeX",
-  "version": "1.6.4",
+  "version": "2.5.0",
   "license": "MIT",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other"],
-  "repository": { "type": "git", "url": "https://github.com/BeautyLaTeX/beautybook_liquidglass.git", "directory": "vscode-liquidglass" },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BeautyLaTeX/beautybook_liquidglass.git",
+    "directory": "vscode-liquidglass"
+  },
   "main": "./extension.js",
-  "extensionKind": ["workspace"],
-  "capabilities": { "untrustedWorkspaces": { "supported": "limited", "description": "Compiling LaTeX requires Workspace Trust.", "restrictedConfigurations": ["liquidglassBuild.python"] } },
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Compiling LaTeX requires Workspace Trust.",
+      "restrictedConfigurations": [
+        "liquidglassLatexStudio.python",
+        "liquidglassBuild.python"
+      ]
+    }
+  },
   "contributes": {
     "viewsContainers": {
-      "activitybar": [{ "id": "liquidglass-build", "title": "LiquidGlass", "icon": "media/glass.svg" }]
+      "activitybar": [
+        {
+          "id": "liquidglass-latex-studio",
+          "title": "LiquidGlass LaTeX Studio",
+          "icon": "media/glass.svg"
+        }
+      ]
     },
     "views": {
-      "liquidglass-build": [{ "type": "webview", "id": "liquidglassBuild.sidebar", "name": "编译面板" }]
+      "liquidglass-latex-studio": [
+        {
+          "type": "webview",
+          "id": "liquidglassLatexStudio.sidebar",
+          "name": "设计与构建"
+        }
+      ]
     },
     "commands": [
-      { "command": "liquidglassBuild.build", "title": "编译当前 LaTeX 文档", "category": "LiquidGlass", "icon": "$(play)" },
-      { "command": "liquidglassBuild.cancel", "title": "停止编译", "category": "LiquidGlass", "icon": "$(debug-stop)" },
-      { "command": "liquidglassBuild.output", "title": "显示编译输出", "category": "LiquidGlass", "icon": "$(output)" },
-      { "command": "liquidglassBuild.pdf", "title": "在编辑器中查看 PDF", "category": "LiquidGlass", "icon": "$(file-pdf)" }
+      {
+        "command": "liquidglassLatexStudio.build",
+        "title": "编译整篇 LaTeX 文档",
+        "category": "LiquidGlass LaTeX Studio",
+        "icon": "$(play)"
+      },
+      {
+        "command": "liquidglassLatexStudio.cancel",
+        "title": "停止编译",
+        "category": "LiquidGlass LaTeX Studio",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "liquidglassLatexStudio.output",
+        "title": "显示编译输出",
+        "category": "LiquidGlass LaTeX Studio",
+        "icon": "$(output)"
+      },
+      {
+        "command": "liquidglassLatexStudio.pdf",
+        "title": "在编辑器中查看 PDF",
+        "category": "LiquidGlass LaTeX Studio",
+        "icon": "$(file-pdf)"
+      },
+      {
+        "command": "liquidglassLatexStudio.studio",
+        "title": "打开材质实验室",
+        "category": "LiquidGlass LaTeX Studio",
+        "icon": "$(symbol-color)"
+      },
+      {
+        "command": "liquidglassLatexStudio.previewSelection",
+        "title": "独立预览 LaTeX 选区",
+        "category": "LiquidGlass LaTeX Studio",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "liquidglassLatexStudio.buildPanel",
+        "title": "打开编译面板",
+        "category": "LiquidGlass LaTeX Studio",
+        "icon": "$(output)"
+      }
     ],
     "menus": {
-      "editor/context": [{ "command": "liquidglassBuild.build", "when": "resourceExtname == .tex && !isInDiffEditor", "group": "navigation@15" }],
-      "explorer/context": [{ "command": "liquidglassBuild.build", "when": "resourceExtname == .tex", "group": "navigation@15" }],
+      "editor/context": [
+        {
+          "command": "liquidglassLatexStudio.build",
+          "when": "resourceExtname == .tex && !isInDiffEditor",
+          "group": "navigation@15"
+        },
+        {
+          "command": "liquidglassLatexStudio.previewSelection",
+          "when": "resourceExtname == .tex && !isInDiffEditor",
+          "group": "navigation@14"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "liquidglassLatexStudio.build",
+          "when": "resourceExtname == .tex",
+          "group": "navigation@15"
+        }
+      ],
       "view/title": [
-        { "command": "liquidglassBuild.build", "when": "view == liquidglassBuild.sidebar", "group": "navigation@1" },
-        { "command": "liquidglassBuild.output", "when": "view == liquidglassBuild.sidebar", "group": "navigation@2" }
+        {
+          "command": "liquidglassLatexStudio.build",
+          "when": "view == liquidglassLatexStudio.sidebar",
+          "group": "navigation@1"
+        },
+        {
+          "command": "liquidglassLatexStudio.output",
+          "when": "view == liquidglassLatexStudio.sidebar",
+          "group": "navigation@2"
+        },
+        {
+          "command": "liquidglassLatexStudio.studio",
+          "when": "view == liquidglassLatexStudio.sidebar",
+          "group": "navigation@0"
+        }
       ]
     },
     "configuration": {
-      "title": "LiquidGlass Build",
+      "title": "LiquidGlass LaTeX Studio",
       "properties": {
-        "liquidglassBuild.python": { "type": "string", "scope": "machine-overridable", "default": "", "description": "Python executable. When empty, detect the local virtual environment and available Python installations." }
+        "liquidglassLatexStudio.python": {
+          "type": "string",
+          "scope": "machine-overridable",
+          "default": "",
+          "description": "Python executable. When empty, detect the local virtual environment and available Python installations."
+        },
+        "liquidglassLatexStudio.fontScale": {
+          "type": "integer",
+          "default": 125,
+          "minimum": 100,
+          "maximum": 200,
+          "scope": "application",
+          "description": "LiquidGlass 窗口的字号百分比。适用于编译面板、材质实验室和选区预览。"
+        }
       }
     }
-  }
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
+  "icon": "media/studio-icon.png"
 }

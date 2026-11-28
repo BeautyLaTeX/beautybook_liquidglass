@@ -1,30 +1,49 @@
-# LiquidGlass 1.6.3
+# LiquidGlass 2.0.2
 
-把包内以 `liquidglass` 命名的全部 `.sty`、`.tex`，以及 `liquidglass-assets/` 和 `lgbuild.py` 放在主 `.tex` 同一层。macOS 可一起复制 `build.command`，双击选择文件。完整示例和图解分别见 `example.pdf`、`Guide.pdf`。
+独立的 tcolorbox 玻璃材质宏包，适用于 TeX Live 或 MacTeX，支持 pdfLaTeX、XeLaTeX 与 LuaLaTeX。中文随包示例使用 XeLaTeX 或 LuaLaTeX。
 
-需要 TeX Live 或 MacTeX（含 tcolorbox）、Python 3.9+ 和 Pillow。取样页面或以 PDF 为源图时还需要 Poppler 的 `pdftoppm`。如系统 Python 无法直接安装 Pillow，可用 `python3 -m venv .venv`，再用 `.venv/bin/python -m pip install Pillow`。macOS 启动器会寻找同目录的 `.venv`。
+2.0 使用 Pillow 读取素材和写出 PNG，用 NumPy 在线性光中计算由真实盒形驱动的折射、模糊和边缘反光。清透预设让弯折沿圆角变化，阅读预设保留平稳的银蓝中心。续页使用逻辑盒坐标延续纹理，在物理切口保持开放边缘。正文、公式、框线、链接和定位由 TeX 排版。
+
+## 原代码窗材质
+
+随包示例以 `\glassbackground{@reading}` 和 `\glasssetup{lg material=reading-window}` 按明暗主题选择阅读底图，配合白色细线和柔影。逐盒选择用 `lg material=reading-window`。需要局部调整时，使用 `lg rim width`、`lg rim opacity` 和 `lg rim color`。
+
+## 照片磨砂玻璃
+
+深色的 `reading-window` 参照本地 `frostglass-final` 的 `frost mist` 成品。以 NumPy 在照片原有的 sRGB 色调下合成 8 mm 和 14.4 mm 扩散，按参考的烟青到暖灰色调着色。默认材质由提供的照片重算，并用参考截图的留白区校准。随包收录经确认可公开发布的无字磨砂底材。
+
+`@reading` 随主题选图。浅色使用 `@silver`，深色使用 `@frost`。指定照片或 `@page` 时会按实际底图计算双尺度扩散。Beautybook 模板的 `macdarkcode` 使用原生 `minted` Monokai 配色，材质层单独处理代码区亮度。
+
+
+## 运行示例
+
+玻璃底图默认以 200 ppi 采样。文字、公式和轮廓仍由 PDF 保持为矢量。
+
+安装 Python 3.9+ 与项目依赖。页面捕获或 PDF 底图另需 Poppler 的 `pdftoppm`。
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r liquidglass-requirements.txt
+.venv/bin/python lgbuild.py example.tex
+```
+
+macOS 也可双击 `build.command`。Windows 可使用 `.venv\Scripts\python.exe` 运行构建器。中文示例优先取项目自带的方正字体，其次取 Fandol，macOS 也可使用系统宋体。完整的图解见随包 `Guide.pdf`。
+
+## 移植
+
+把以 `liquidglass` 命名的宏包和模块，以及 `lgbuild.py`、`liquidglass_optics.py`、`liquidglass-requirements.txt` 与 `liquidglass-assets/` 放在主文件旁。
 
 ```latex
 \documentclass{article}
 \usepackage{liquidglass}
+
 \begin{document}
-\section{Geometry}
-\begin{lgtheorem}{Pythagoras}{pythagoras}
+\begin{lgtheorem}[lg material=reading]{Pythagoras}{pythagoras}
   In a right triangle, \(a^2+b^2=c^2\).
 \end{lgtheorem}
 \end{document}
 ```
 
-直接运行 `python3 lgbuild.py main.tex --engine xelatex` 也可生成完整效果。单跑 TeX 会用主题预览图。蒙版、模糊、折射和像素对比度保护由构建器渲染。
+`lg material=regular`、`clear` 和 `reading` 默认采用 2.0 的新算法。用 `lg renderer=legacy` 可逐盒复用 1.6.x 外观，`--renderer legacy` 可整份文档回退。只运行 TeX 时会使用预览材质。完整构建才能看到实际底图的折射与磨砂效果。
 
-预置盒与 Beautybook 共用曲线标题签、折边和右下饰带的绘图代码。盒内采用原版的留白和正文层次。编号环境依次接收可选的盒子参数、标题和标签后缀。默认英文，中文文档使用 `ctex` 后可写 `\glasssettheoremlanguage{zh}`。切换材质用 `lg material=regular`、`lg material=clear`、`lg material=opaque` 或 `lg material=reading`。宽阴影和接触阴影可分别调节。
-
-用 `\begin{lgtimeline}` 和 `\lgtimelineitem` 排版同款时间线。正文的实际字体由模板决定。随包示例用 TeX Live 的 Fandol 宋、楷、黑搭配。已有 Beautybook 字体的用户可让示例从 `fonts/` 读取，也可在导言区指定 `\LiquidGlassFontRoot` 的路径，末尾保留斜线。
-
-```latex
-\glasssetup{lg lift=cloud,lg shadow blur=6.2mm,lg contact opacity=.019}
-```
-
-旧有 `liquid glass` 样式和 `glassbox` 接口仍可用于手动套到已有 tcolorbox。移植包内的定理预设统一使用卷边风格。
-
-编辑手册时，可从包目录运行 `latexmk -lualatex -outdir=build manual/guide.tex`。随包的 `manual/effects.pdf` 是供手册嵌入的配图库。
+`lg material=reading-lens` 为可选的银蓝悬浮阅读预设。NumPy 在线性光中分别计算受光边缘的底图位移和细高光，背光底缘延续阅读底色。`lg lift=float` 用原生轮廓绘制短投影与窄接触阴影。`lg rim width` 和 `lg rim opacity` 可统一调节局部高光。独立设置 `lg rim=hairline` 可用矢量细线，`lg rim color` 可为该线改色，`lg rim=classic` 可恢复原有描边。续页切口保持开放。

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/osascript -l JavaScript "$(dirname "$0")/pdf-render.js" info "$@"

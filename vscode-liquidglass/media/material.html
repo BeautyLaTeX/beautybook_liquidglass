@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{SOURCE}}; img-src {{SOURCE}} data:; script-src 'nonce-{{NONCE}}'">
+  <link rel="stylesheet" href="{{FONT_CSS}}">
+  <link rel="stylesheet" href="{{CSS}}">
+  <title>LiquidGlass · 材质实验室</title>
+</head>
+<body data-initial-font-scale="{{FONT_SCALE}}" data-silver="{{SILVER}}" data-frost="{{FROST}}" data-default="{{DEFAULT}}">
+  <header class="top">
+    <div class="brand"><img src="{{ICON}}" alt=""><span>LiquidGlass LaTeX Studio</span></div>
+    <div class="top-actions">
+      <label class="font-scale">字号 <select data-font-scale aria-label="窗口字号"></select></label>
+      <button id="build-panel" class="quiet">编译面板 <span aria-hidden="true">↗</span></button>
+    </div>
+  </header>
+  <main>
+    <h1>材质实验室</h1>
+    <div class="workspace">
+      <section class="plate pane" aria-labelledby="sample-title">
+        <header class="plate-head">
+          <div><h2 id="sample-title">材质样片</h2><p id="source-kind"></p></div>
+          <div class="plate-tools">
+            <label><span class="sr">测试背景</span><select id="stage"><option value="paper">文档底色</option><option value="natural">自然光</option><option value="grid">测试网格</option><option value="dark">暗光</option></select></label>
+            <label><span class="sr">跨页状态</span><select id="fragment"><option value="full">完整盒</option><option value="first">跨页首段</option><option value="middle">跨页中段</option><option value="last">跨页尾段</option></select></label>
+          </div>
+        </header>
+        <div class="view-bar" role="group" aria-label="样片渲染方式">
+          <button id="live-preview" type="button" aria-pressed="true">即时预览</button>
+          <button id="pdf-preview" type="button" aria-pressed="false">PDF 实编译</button>
+        </div>
+        <div class="bezel">
+          <div class="art" id="art">
+            <canvas width="780" height="448" id="sample" data-scene="{{SCENE}}" aria-label="LiquidGlass 材质即时模拟"></canvas>
+            <div class="specimen" id="specimen">
+              <div class="caption" id="specimen-title">LiquidGlass</div>
+              <div id="specimen-body">光落在纸上</div>
+              <div class="formula">∫<sub>0</sub><sup>1</sup> x<sup>2</sup> dx = ⅓</div>
+            </div>
+          </div>
+          <div id="proof-stage" class="proof-stage" hidden>
+            <img id="proof-image" alt="LiquidGlass 正式构建后的样片" hidden>
+            <p id="proof-message" role="status"></p>
+          </div>
+        </div>
+        <footer class="plate-foot">
+          <div class="sample-readout">
+            <span class="render-state"><i aria-hidden="true"></i><span id="render-state-label">近似渲染</span></span>
+            <span id="contrast"></span>
+            <span id="image-status" role="status" hidden></span>
+          </div>
+          <div class="sample-actions">
+            <button type="button" id="compare" class="quiet" aria-pressed="false">底图对照</button>
+            <button type="button" id="rebuild-proof" class="quiet" hidden>重新编译</button>
+            <button type="button" id="zoom-proof" class="quiet" aria-pressed="false" hidden>放大</button>
+          </div>
+        </footer>
+      </section>
+      <aside class="inspector pane" aria-labelledby="inspector">
+        <header class="inspector-head">
+          <h2 id="inspector">材质属性</h2>
+          <button id="reset" class="quiet" title="清除自定义参数，恢复当前预设">恢复预设</button>
+        </header>
+        <div class="presets">
+          <div><label for="material">材质</label><select id="material"></select></div>
+          <div><label for="lift">阴影</label><select id="lift"></select></div>
+        </div>
+        <div class="formal-presets" role="group" aria-label="正式版主题">
+          <button type="button" id="formal-light">浅色 · 银蓝</button>
+          <button type="button" id="formal-dark">深色 · 冷暖磨砂</button>
+        </div>
+        <nav id="tabs" aria-label="属性类别"></nav>
+        <div id="controls"></div>
+      </aside>
+      <section class="output pane" aria-labelledby="style-title">
+        <header class="output-head"><h2 id="style-title">样式代码</h2><button id="copy">复制样式 <span class="copy-icon" aria-hidden="true"></span></button></header>
+        <div class="output-tools">
+          <label><span class="sr">样式格式</span><select id="format"><option value="options">盒内选项</option><option value="global">全局设置</option><option value="named">命名样式</option></select></label>
+          <label id="name-wrap" hidden><span class="sr">样式名称</span><input id="name" type="text" value="studio glass" maxlength="56"></label>
+          <p id="usage">用于已有 LiquidGlass 盒子的可选参数。</p>
+        </div>
+        <pre tabindex="0" aria-label="生成的 LaTeX 样式"><code id="code"></code></pre>
+        <p id="copy-status" role="status"></p>
+      </section>
+    </div>
+  </main>
+  <div id="toast" role="status" hidden></div>
+  <script nonce="{{NONCE}}" src="{{MODEL}}"></script><script nonce="{{NONCE}}" src="{{CANVAS}}"></script><script nonce="{{NONCE}}" src="{{FONT_JS}}"></script>
+  <script nonce="{{NONCE}}" src="{{JS}}"></script>
+</body>
+</html>

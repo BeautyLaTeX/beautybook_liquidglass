@@ -1,4 +1,5 @@
 {
+  "liquidglassLatexStudio.python": "/Users/ethanlu/Documents/ai 工作区/.beautybook_liquidglass.venv/bin/python",
   "latex-workshop.latex.tools": [
     {
       "name": "beautybook-auto",
@@ -13,11 +14,15 @@
       "cwd": "%DIR%"
     },
     {
-      "name": "liquidglass-1.6",
-      "command": "/opt/homebrew/bin/python3",
+      "name": "liquidglass-2.0",
+      "command": "/bin/sh",
       "args": [
-        "%WORKSPACE_FOLDER%/lgbuild.py",
-        "%DOC_EXT%"
+        "%WORKSPACE_FOLDER%/build.command",
+        "%DOC_EXT%",
+        "--glass",
+        "--no-pause",
+        "--no-open",
+        "--sync-next-to-pdf"
       ],
       "cwd": "%DIR%"
     }
@@ -30,9 +35,9 @@
       ]
     },
     {
-      "name": "LiquidGlass 1.6",
+      "name": "LiquidGlass 2.0（直接构建）",
       "tools": [
-        "liquidglass-1.6"
+        "liquidglass-2.0"
       ]
     }
   ],

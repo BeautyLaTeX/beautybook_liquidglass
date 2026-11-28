@@ -1,0 +1,104 @@
+%% LiquidGlass shadow module. SPDX-License-Identifier: MIT
+% All shadow paint is outside the native frame. Its centre is not added
+% to the body, and open page-cut edges are clipped instead of closed.
+% The smooth profile samples the cubic falloff as opacity increments.
+% 平滑模式将三次衰减离散成透明度增量，叠加后保持预定的不透明度。
+\def\lg@contourshadow#1#2#3#4#5{%
+  % Normalize the mask before applying the layer's opacity. PDF viewers can
+  % round faint individual fills to zero, and adjacent filled rings can seam.
+  \begin{scope}[transparency group,opacity=#1,overlay]
+    \foreach\lg@i in{\lg@shadowsteps,...,1}{%
+      \pgfmathsetmacro\lg@t{(\lg@i-.5)/\lg@shadowsteps}%
+      \pgfmathsetmacro\lg@prev{min(1,(\lg@i+.5)/\lg@shadowsteps)}%
+      % Transmittance is t^2(3-2t). The ratio is the surviving light after this fill.
+      \pgfmathsetmacro\lg@alpha{1-(\lg@t/\lg@prev)^2*(3-2*\lg@t)/(3-2*\lg@prev)}%
+      \pgfmathsetlengthmacro\lg@dilation{max(#5+#2*\lg@i/\lg@shadowsteps,-max(0,min(\lg@width,\lg@height)*.5-.05pt))}%
+      \csname tcb@shadow@\tcb@split@state\endcsname
+        {#3}{#4}{-\lg@dilation}{overlay,fill=\lg@shadowcolor,draw=none,fill opacity=\lg@alpha}%
+    }%
+  \end{scope}%
+}
+\def\lg@shadowlayer#1#2#3#4#5{%
+  \ifdim#1pt>0pt\relax
+  \ifdefstring{\lg@shadowprofile}{contour}{\lg@contourshadow{#1}{#2}{#3}{#4}{#5}}{%
+  \foreach\lg@i in{\lg@shadowsteps,...,1}{%
+    \ifdefstring{\lg@shadowprofile}{smooth}{%
+      \pgfmathsetmacro\lg@t{(\lg@i-.5)/\lg@shadowsteps}%
+      \pgfmathsetlengthmacro\lg@dilation{max(#5+#2*\lg@t,-max(0,min(\lg@width,\lg@height)*.5-.05pt))}%
+      \pgfmathsetmacro\lg@alpha{1-(1-#1)^(6*\lg@t*(1-\lg@t)/\lg@shadowsteps)}%
+    }{%
+      \pgfmathsetlengthmacro\lg@dilation{max(#5+#2*\lg@i/\lg@shadowsteps,-max(0,min(\lg@width,\lg@height)*.5-.05pt))}%
+      \pgfmathsetmacro\lg@alpha{min(1,#1*exp(-3*(\lg@i/\lg@shadowsteps)^2)/(\lg@shadowsteps*.49))}%
+    }%
+    \csname tcb@shadow@\tcb@split@state\endcsname
+        {#3}{#4}{-\lg@dilation}%
+        {overlay,fill=\lg@shadowcolor,draw=none,opacity=\lg@alpha}%
+  }%
+  }%
+  \fi
+}
+\def\lg@shadowpaint{%
+  \pgfmathsetmacro\lg@shadowtotal{\lg@shadow+\lg@contact}%
+  \ifdim\lg@shadowtotal pt>0pt\relax
+  \begin{scope}[overlay]
+    \pgfmathsetlengthmacro\lg@shadowpad{max(abs(\lg@shadowx)+abs(\lg@shadowy)+\lg@shadowblur+abs(\lg@shadowspread),abs(\lg@contactx)+abs(\lg@contacty)+\lg@contactblur+abs(\lg@contactspread))+1mm}%
+    \ifdefstring{\tcb@split@state}{first}{%
+      \clip([xshift=-\lg@shadowpad]frame.south west)rectangle
+                ([xshift=\lg@shadowpad,yshift=\lg@shadowpad]frame.north east);}{%
+      \ifdefstring{\tcb@split@state}{middle}{%
+        \clip([xshift=-\lg@shadowpad]frame.south west)rectangle
+                  ([xshift=\lg@shadowpad]frame.north east);}{%
+        \ifdefstring{\tcb@split@state}{last}{%
+          \clip([xshift=-\lg@shadowpad,yshift=-\lg@shadowpad]frame.south west)rectangle
+                    ([xshift=\lg@shadowpad]frame.north east);}{}%
+      }%
+    }%
+    \begin{tcbinvclipframe}
+      \lg@shadowlayer{\lg@shadow}{\lg@shadowblur}{\lg@shadowx}{\lg@shadowy}{\lg@shadowspread}%
+      \lg@shadowlayer{\lg@contact}{\lg@contactblur}{\lg@contactx}{\lg@contacty}{\lg@contactspread}%
+    \end{tcbinvclipframe}
+  \end{scope}
+  \fi
+}
+\tcbset{
+  lg shadow profile/.is choice,
+  lg shadow profile/classic/.code={\def\lg@shadowprofile{classic}},
+  lg shadow profile/smooth/.code={\def\lg@shadowprofile{smooth}},
+  lg shadow profile/contour/.code={\def\lg@shadowprofile{contour}},
+  lg contact follows shadow/.code={\def\lg@contactx{\lg@shadowx}},
+  lg contact xshift/.code={\lg@setdimension\lg@contactx{#1}{-10mm}{10mm}{lg contact xshift}},
+  lg shadow/.code={\lg@setnumber\lg@shadow{#1}{0}{1}{lg shadow}},
+  lg shadow opacity/.style={lg shadow=#1},
+  lg shadow blur/.code={\lg@setdimension\lg@shadowblur{#1}{0pt}{10mm}{lg shadow blur}},
+  lg shadow xshift/.code={\lg@setdimension\lg@shadowx{#1}{-10mm}{10mm}{lg shadow xshift}},
+  lg shadow yshift/.code={\lg@setdimension\lg@shadowy{#1}{-10mm}{10mm}{lg shadow yshift}},
+  lg shadow spread/.code={\lg@setdimension\lg@shadowspread{#1}{-2mm}{5mm}{lg shadow spread}},
+  lg shadow color/.store in=\lg@shadowcolor,
+  lg contact opacity/.code={\lg@setnumber\lg@contact{#1}{0}{1}{lg contact opacity}},
+  lg contact blur/.code={\lg@setdimension\lg@contactblur{#1}{0pt}{10mm}{lg contact blur}},
+  lg contact yshift/.code={\lg@setdimension\lg@contacty{#1}{-10mm}{10mm}{lg contact yshift}},
+  lg contact spread/.code={\lg@setdimension\lg@contactspread{#1}{-2mm}{5mm}{lg contact spread}},
+  lg shadow steps/.code={\lg@setnumber\lg@shadowsteps{#1}{4}{64}{lg shadow steps}%
+    \pgfmathtruncatemacro\lg@stepsinteger{\lg@shadowsteps}%
+    \ifdim\lg@stepsinteger pt=\lg@shadowsteps pt\relax
+      \let\lg@shadowsteps\lg@stepsinteger
+    \else
+      \PackageError{liquidglass}{lg shadow steps must be an integer}{Choose an integer from 4 to 64.}%
+    \fi},
+  lg lift/.is choice,
+  lg lift/cloud/.style={lg lift=air,lg shadow profile=smooth,lg shadow=.10,
+    lg shadow blur=6.2mm,lg shadow yshift=-1.05mm,lg shadow spread=-.35mm,
+    lg contact opacity=.019,lg contact blur=1.35mm,lg contact yshift=-.26mm},
+  lg lift/quiet/.style={lg lift=air,lg shadow profile=smooth,lg shadow=.075,
+    lg shadow blur=3.25mm,lg shadow yshift=-.85mm,lg shadow spread=-.12mm,
+    lg contact opacity=.021,lg contact blur=.78mm,lg contact yshift=-.22mm},
+  lg lift/float/.style={lg lift=air,lg shadow profile=contour,lg shadow=.052,
+    lg shadow blur=3.40mm,lg shadow xshift=.20mm,lg shadow yshift=-.65mm,lg shadow spread=-.32mm,
+    lg contact opacity=.026,lg contact blur=.61mm,lg contact xshift=.07mm,
+    lg contact yshift=-.24mm,lg contact spread=-.12mm},
+  lg lift/none/.style={lg shadow profile=classic,lg contact follows shadow,lg shadow=0,lg shadow blur=2mm,lg shadow xshift=0mm,lg shadow yshift=-.65mm,lg shadow spread=0mm,lg shadow color=LGShadow,lg shadow steps=24,lg contact opacity=0,lg contact blur=.6mm,lg contact yshift=-.3mm,lg contact spread=0mm},
+  lg lift/soft/.style={lg shadow profile=classic,lg contact follows shadow,lg shadow=.12,lg shadow blur=2mm,lg shadow xshift=0mm,lg shadow yshift=-.65mm,lg shadow spread=0mm,lg shadow color=LGShadow,lg shadow steps=24,lg contact opacity=0,lg contact blur=.6mm,lg contact yshift=-.3mm,lg contact spread=0mm},
+  lg lift/raised/.style={lg shadow profile=classic,lg contact follows shadow,lg shadow=.18,lg shadow blur=3mm,lg shadow xshift=0mm,lg shadow yshift=-1mm,lg shadow spread=0mm,lg shadow color=LGShadow,lg shadow steps=32,lg contact opacity=0,lg contact blur=.6mm,lg contact yshift=-.3mm,lg contact spread=0mm},
+  lg lift/air/.style={lg shadow profile=classic,lg contact follows shadow,lg shadow=.12,lg shadow blur=5mm,lg shadow xshift=0mm,lg shadow yshift=-.9mm,lg shadow spread=.1mm,lg shadow color=LGShadow,lg shadow steps=40,lg contact opacity=.035,lg contact blur=.65mm,lg contact yshift=-.3mm,lg contact spread=0mm},
+}
+\endinput

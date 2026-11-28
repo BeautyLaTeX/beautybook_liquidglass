@@ -1,0 +1,430 @@
+%% liquidglass -- registered PDF backdrop materials for tcolorbox
+%% SPDX-License-Identifier: MIT
+%% Copyright (c) 2026 Ethan Lu and Liquidglass contributors
+\NeedsTeXFormat{LaTeX2e}[2022-06-01]
+\ProvidesPackage{liquidglass}[2026/11/28 v2.0.2 Shape-aware optical materials and native theorem presets]
+\edef\lg@packagedir{\CurrentFilePath}
+\RequirePackage{tcolorbox}
+\tcbuselibrary{skins,breakable,hooks}
+\RequirePackage{zref-savepos,zref-abspage}
+\usetikzlibrary{calc,fadings}
+\zref@addprop{savepos}{abspage}
+\definecolor{LGInk}{HTML}{142638}
+\definecolor{LGFrostInk}{RGB}{5,12,14}
+\definecolor{LGPaper}{HTML}{F4F8FF}
+\definecolor{LGShadow}{HTML}{142A42}
+\definecolor{LGWindowLightRim}{RGB}{172,179,190}
+\definecolor{LGWindowDarkRim}{RGB}{112,122,134}
+\pgfdeclarehorizontalshading{lg@darkrimshade}{100bp}{%
+  color(0bp)=(pgftransparent!8); color(25bp)=(pgftransparent!8);
+  color(51bp)=(pgftransparent!58); color(72bp)=(pgftransparent!90);
+  color(100bp)=(pgftransparent!90)}
+\tikzfading[name=lg dark rim,shading=lg@darkrimshade]
+\newcount\lg@boxes
+\newcount\lg@fragments
+\newwrite\lg@requests
+\newdimen\lg@width
+\newdimen\lg@height
+\newif\iflg@warned
+\newif\iflg@painted
+\newif\iflg@validsurface
+\newif\iflg@capture
+\ifdefined\LiquidGlassCapture\lg@capturetrue\fi
+% Capture session / 采集会话
+% The .lgr request stream and the fragment map share stable fragment IDs.
+% 请求文件和材质映射通过稳定的片段编号对应。
+\AtBeginDocument{%
+  \immediate\openout\lg@requests=\jobname.lgr
+  \ifdefined\LiquidGlassMapFile
+    \InputIfFileExists{\LiquidGlassMapFile}{}{}%
+  \else
+    \InputIfFileExists{\jobname.lgi.tex}{}{}%
+  \fi
+}
+\AtEndDocument{\immediate\closeout\lg@requests}
+% Public setup and sources / 公共配置与背景入口
+\def\lg@defaults{}
+\def\lg@globalimage{@page}
+\def\lg@renderer{auto}
+\def\lg@legacyrenderer{legacy}
+\def\lg@opticalshape{rounded}
+\let\lg@materialpreset\@empty
+\let\lg@rimstyle\@empty
+\let\lg@rimwidth\@empty
+\let\lg@rimopacity\@empty
+\let\lg@rimcolor\@empty
+\def\lg@pageimage{}
+\newif\iflg@backgroundset
+\let\lg@initial\@empty
+\newcommand\glasssetup[1]{\appto\lg@defaults{,#1}}
+\newcommand\glassbackground[1]{\def\lg@globalimage{#1}\lg@backgroundsettrue}
+\newcommand\glassbackgroundfolder[1]{\glassbackground{@folder:#1}}
+\newcommand\glassbackgrounds[1]{\glassbackground{@list:#1}}
+\newcommand\glasspagebackground[1]{\gdef\lg@pageimage{#1}}
+\newcommand\clearglasspagebackground{\global\let\lg@pageimage\@empty}
+\newsavebox\lg@imagebox
+\AddToHook{shipout/background}{%
+  \ifx\lg@pageimage\@empty\else
+  \begin{tikzpicture}[remember picture,overlay]
+    \sbox\lg@imagebox{\includegraphics{\lg@pageimage}}%
+    \pgfmathsetmacro\lg@aspect{\strip@pt\wd\lg@imagebox/\strip@pt\ht\lg@imagebox}%
+    \pgfmathsetlengthmacro\lg@pagewidth{max(\paperwidth,\paperheight*\lg@aspect)}%
+    \clip(current page.south west)rectangle(current page.north east);
+    \node[inner sep=0pt] at(current page.center){\includegraphics[width=\lg@pagewidth]{\lg@pageimage}};
+  \end{tikzpicture}%
+  \fi
+}
+% Logical box and material request / 逻辑盒子与材质请求
+\def\lg@begin{%
+  \edef\lg@currentowner{\thetcolorboxnumber}%
+  \ifx\lg@owner\lg@currentowner\else
+  \let\lg@owner\lg@currentowner
+  \global\advance\lg@boxes by1
+  \edef\lg@logical{\the\lg@boxes}%
+  \let\lg@source\lg@globalimage
+  \tcbset{lg theme=light,lg blur=2.4,lg opacity=.30,lg grain=.012,
+  lg refraction=.35,lg saturation=1.08,lg contrast=7,
+  lg focus x=.5,lg focus y=.5,lg image fit=cover,lg edge=.7,
+  lg edge bottom=.24,lg edge left=.23,lg edge right=.13,lg edge width=.65pt,
+  lg edge color=white,lg edge shade color=LGShadow,lg lift=soft,
+  lg mask=0,lg sheen=0,lg sheen size=.75,lg sheen x=.35,lg sheen y=.22,lg highlight rolloff=0}%
+  \def\lg@opticsprofile{regular}%
+  \let\lg@materialpreset\@empty
+  \lg@initial
+  \let\lg@initial\@empty
+  \expandafter\tcbset\expandafter{\lg@defaults}%
+  \fi
+}
+\def\lg@captureclip{%
+  % Clip paint, not boxes: writes and saved positions still reach shipout.
+  \pgfinterruptboundingbox
+  \pgfpathrectangle{\pgfpointorigin}{\pgfpointorigin}\pgfusepath{clip}%
+  \endpgfinterruptboundingbox
+}
+\def\lg@paint{%
+  \iflg@painted\else\lg@paintedtrue
+  \begingroup
+  \global\advance\lg@fragments by1
+  \edef\lg@fragment{\the\lg@fragments}%
+  \pgfextractx{\lg@width}{\pgfpointdiff{\pgfpointanchor{frame}{south west}}{\pgfpointanchor{frame}{north east}}}%
+  \pgfextracty{\lg@height}{\pgfpointdiff{\pgfpointanchor{frame}{south west}}{\pgfpointanchor{frame}{north east}}}%
+  \immediate\write\lg@requests{LG|\lg@fragment|\lg@logical|\lg@theme|\lg@blur|\lg@opacity|\lg@grain|\lg@refraction|\lg@saturation|\lg@contrast|\lg@focusx|\lg@focusy|\lg@source|\tcb@split@state|\number\lg@width|\number\lg@height|\lg@imagefit|\lg@sheen|\lg@sheensize|\lg@sheenx|\lg@sheeny|\lg@rolloff|\lg@mask}%
+  \lg@writeoptics
+  \node[overlay,anchor=base west,inner sep=0pt,outer sep=0pt,minimum size=0pt] at(frame.south west)
+    {\expandafter\zsavepos\expandafter{lg-pos-\lg@fragment}};
+  \iflg@capture\else
+    \lg@shadowpaint
+    \begin{tcbclipframe}
+      \lg@validsurfacefalse
+      \ifcsname lg@file@\lg@fragment\endcsname
+        \ifcsname lg@width@\lg@fragment\endcsname
+          \ifcsname lg@height@\lg@fragment\endcsname
+            \ifnum\csname lg@width@\lg@fragment\endcsname=\number\lg@width\relax
+              \ifnum\csname lg@height@\lg@fragment\endcsname=\number\lg@height\relax
+                \IfFileExists{\csname lg@file@\lg@fragment\endcsname}{\lg@validsurfacetrue}{}%
+              \fi
+            \fi
+          \fi
+        \fi
+      \fi
+      \iflg@validsurface
+        \edef\lg@surface{\csname lg@file@\lg@fragment\endcsname}%
+      \else
+        \edef\lg@surface{\lg@packagedir liquidglass-assets/fallback-\lg@theme.png}%
+        \lg@iffrost{\ifdefstring{\lg@opticsprofile}{reading-window-code}{}{%
+          \edef\lg@surface{\lg@packagedir liquidglass-assets/frost-chroma.png}%
+        }}{}%
+        \iflg@warned\else\global\lg@warnedtrue
+          \PackageWarningNoLine{liquidglass}{Preview material used. Run python3 lgbuild.py \jobname.tex for registered backgrounds and custom parameters}%
+        \fi
+      \fi
+      \IfFileExists{\lg@surface}{%
+        \node[overlay,anchor=south west,inner sep=0pt,outer sep=0pt] at(frame.south west)
+          {\includegraphics[width=\lg@width,height=\lg@height]{\lg@surface}};
+      }{\fill[\lg@tint](frame.south west)rectangle(frame.north east);}%
+      % Native tcolorbox clipping owns every curve, including split-piece cuts.
+      % The external renderer supplies the sheen as part of the surface.
+      % 柔光由外部构建器合成进底图。
+    \end{tcbclipframe}
+    \lg@ifsharedrim{\lg@earlyrim}{\ifdim\lg@edgewidth>0pt\relax\lg@edgepaint\fi}%
+  \fi
+  \endgroup
+  \fi
+}
+% Auto reading-lens embeds the light in the surface, bypassing stacked legacy strokes.
+\def\lg@earlyrim{\lg@rimpaint}
+\def\lg@iffrost#1#2{%
+  \ifdefstring{\lg@materialpreset}{reading-window}{%
+    \ifdefstring{\lg@theme}{dark}{%
+      \ifx\lg@renderer\lg@legacyrenderer #2\else #1\fi
+    }{#2}%
+  }{#2}%
+}
+\def\lg@frosttext{%
+  \lg@iffrost{\tcbset{coltext=LGFrostInk,coltitle=LGFrostInk,lg contrast=4.5}}{}%
+}
+\def\lg@ifwindowrim#1#2{%
+  \ifdefstring{\lg@materialpreset}{reading-window}{%
+    \ifx\lg@rimstyle\@empty #1\else\ifdefstring{\lg@rimstyle}{auto}{#1}{#2}\fi
+  }{#2}%
+}
+\def\lg@ifsharedrim#1#2{%
+  \ifdefstring{\lg@rimstyle}{classic}{#2}{%
+    \ifdefstring{\lg@rimstyle}{hairline}{#1}{%
+      \ifdefstring{\lg@rimstyle}{none}{#1}{%
+        \lg@ifwindowrim{#1}{\ifdefstring{\lg@opticsprofile}{reading-lens}{#1}{#2}}}}}%
+}
+\def\lg@rimpaint{%
+  \ifdefstring{\lg@rimstyle}{hairline}{%
+    \begingroup
+      \ifx\lg@rimwidth\@empty\def\lg@rimwidth{.42pt}\fi
+      \ifx\lg@rimopacity\@empty
+        \ifdefstring{\lg@theme}{dark}{\def\lg@rimopacity{.30}}{\def\lg@rimopacity{.74}}%
+      \fi
+      \ifx\lg@rimcolor\@empty\def\lg@rimcolor{white}\fi
+      \ifdim\lg@rimwidth>0pt\relax
+        \begin{scope}[overlay]
+          \csname tcb@border@\tcb@split@state\endcsname{\lg@rimwidth}{.08pt}%
+            {draw=\lg@rimcolor,draw opacity=\lg@rimopacity,line cap=butt,line join=round}%
+        \end{scope}%
+      \fi
+    \endgroup
+  }{\lg@ifwindowrim{\lg@windowrim}{}}%
+}
+% The two strokes of the original code window, using the current box's path.
+\def\lg@windowrim{%
+  \begingroup
+    \ifdefstring{\lg@theme}{dark}{%
+      \ifx\lg@rimwidth\@empty\def\lg@rimwidth{.44pt}\fi
+      \ifx\lg@rimopacity\@empty\def\lg@rimopacity{.27}\fi
+    }{%
+      \ifx\lg@rimwidth\@empty\def\lg@rimwidth{.70pt}\fi
+      \ifx\lg@rimopacity\@empty\def\lg@rimopacity{.72}\fi
+      \def\lg@windowouter{\lg@windowstroke{LGWindowLightRim}{.36}{.40pt}{.12pt}}%
+    }%
+    \ifx\lg@rimcolor\@empty\def\lg@rimcolor{white}\fi
+    \ifdim\lg@rimwidth>0pt\relax
+      \ifdefstring{\lg@theme}{dark}{%
+        \ifdefstring{\tcb@split@state}{unbroken}{\def\lg@darkrimangle{18}}{\def\lg@darkrimangle{0}}%
+        \begin{scope}[overlay]
+          \path[scope fading=lg dark rim,fading angle=\lg@darkrimangle]
+            (frame.south west) rectangle (frame.north east);%
+          \lg@windowstroke{\lg@rimcolor}{\lg@rimopacity}{\lg@rimwidth}{.25pt}%
+        \end{scope}%
+      }{\lg@windowstroke{\lg@rimcolor}{\lg@rimopacity}{\lg@rimwidth}{.35pt}}%
+    \fi
+    \ifdefstring{\lg@theme}{dark}{}{\lg@windowouter}%
+  \endgroup
+}
+\def\lg@windowstroke#1#2#3#4{%
+  \csname tcb@border@\tcb@split@state\endcsname{#3}{#4-(#3)/2}%
+    {overlay,draw=#1,draw opacity=#2}%
+}
+\def\lg@toplight{%
+  \draw[overlay,\lg@edgecolor,draw opacity=\lg@edge,line width=\lg@edgewidth,line cap=round]
+    ([xshift=\lg@edgearc{NW},yshift=-.35pt]frame.north west)--
+    ([xshift=-\lg@edgearc{NE},yshift=-.35pt]frame.north east);
+}
+\def\lg@bottomlight{%
+  \draw[overlay,\lg@edgecolor,draw opacity=\lg@edgebottom,line width=\lg@edgewidth*.54,line cap=round]
+    ([xshift=\lg@edgearc{SW},yshift=.3pt]frame.south west)--
+    ([xshift=-\lg@edgearc{SE},yshift=.3pt]frame.south east);
+}
+\def\lg@edgepaint{%
+  \begin{scope}[overlay]
+    \pgfmathsetlengthmacro\lg@borderwidth{\lg@edgewidth*.69}%
+    \csname tcb@border@\tcb@split@state\endcsname{\lg@borderwidth}{.25pt}{\lg@edgecolor,draw opacity=\lg@edgebottom}%
+  \end{scope}
+  \begin{tcbclipframe}
+    \ifdefstring{\tcb@split@state}{unbroken}{\lg@toplight\lg@bottomlight}{}%
+    \ifdefstring{\tcb@split@state}{first}{\lg@toplight}{}%
+    \ifdefstring{\tcb@split@state}{last}{\lg@bottomlight}{}%
+    \let\lg@northedgearc\lg@edgearc
+    \let\lg@southedgearc\lg@edgearc
+    \ifdefstring{\tcb@split@state}{first}{\def\lg@southedgearc##1{0pt}}{}%
+    \ifdefstring{\tcb@split@state}{last}{\def\lg@northedgearc##1{0pt}}{}%
+    \ifdefstring{\tcb@split@state}{middle}{%
+      \def\lg@northedgearc##1{0pt}\let\lg@southedgearc\lg@northedgearc}{}%
+    \draw[overlay,\lg@edgecolor,draw opacity=\lg@edgeleft,line width=\lg@edgewidth*.69]
+      ([xshift=.35pt,yshift=-\lg@northedgearc{NW}]frame.north west)--
+      ([xshift=.35pt,yshift=\lg@southedgearc{SW}]frame.south west);
+    \draw[overlay,\lg@edgeshadecolor,draw opacity=\lg@edgeright,line width=\lg@edgewidth*.54]
+      ([xshift=-.35pt,yshift=-\lg@northedgearc{NE}]frame.north east)--
+      ([xshift=-.35pt,yshift=\lg@southedgearc{SE}]frame.south east);
+  \end{tcbclipframe}
+}
+% Value validation / 参数校验
+\def\lg@setnumber#1#2#3#4#5{%
+  \pgfmathparse{#2}%
+  \ifdim\pgfmathresult pt<#3pt\relax
+    \PackageError{liquidglass}{#5 must be between #3 and #4}{Use a value in the documented range.}%
+  \else\ifdim\pgfmathresult pt>#4pt\relax
+    \PackageError{liquidglass}{#5 must be between #3 and #4}{Use a value in the documented range.}%
+  \else\edef#1{\pgfmathresult}\fi\fi
+}
+\def\lg@setdimension#1#2#3#4#5{%
+  \@tempdima=\dimexpr#2\relax
+  \ifdim\@tempdima<#3\relax
+    \PackageError{liquidglass}{#5 is outside its allowed dimension range}{Use a dimension with a unit, within the documented range.}%
+  \else\ifdim\@tempdima>#4\relax
+    \PackageError{liquidglass}{#5 is outside its allowed dimension range}{Use a dimension with a unit, within the documented range.}%
+  \else\edef#1{\the\@tempdima}\fi\fi
+}
+% Use native tcolorbox corner dispatch so clipping, borders, shadows and
+% page cuts all follow the same corner settings.
+\ExplSyntaxOn
+\cs_new_eq:NN \lg@parseradius \keyval_parse:NNn
+\cs_new:Npn \lg@limitarc #1 {
+  \dim_min:nn {#1} { \dim_min:nn {\tcb@width / 2} {\tcb@height / 2} }
+}
+\cs_new:Npn \lg@insetarc #1#2 {
+  \dim_max:nn {0pt} {\lg@limitarc{#1} - \tcb@arc@scale\dimexpr #2\relax}
+}
+\ExplSyntaxOff
+\def\lg@roundarc#1{%
+  \edef\lg@arcvalue{#1}%
+  \pgfsetcornersarced{\pgfqpoint{\lg@arcvalue}{\lg@arcvalue}}%
+}
+\def\lg@definearcmode#1#2{%
+  \@namedef{tcb@arc@out@#2@lg#1}{\lg@roundarc{\lg@limitarc{\@nameuse{lg@radius@#1}}}}%
+  \expandafter\let\csname tcb@arc@ins@#2@lg#1\expandafter\endcsname
+      \csname tcb@arc@out@#2@lg#1\endcsname
+  \@namedef{tcb@arc@bor@#2@lg#1}{\lg@roundarc{\lg@insetarc{\@nameuse{lg@radius@#1}}{\tcb@border@ts}}}%
+  \@namedef{tcb@arc@sha@#2@lg#1}{\lg@roundarc{\lg@insetarc{\@nameuse{lg@radius@#1}}{\tcb@shadow@ts}}}%
+}
+\@for\lg@sourcecorner:=NW,NE,SW,SE\do{%
+  \expandafter\edef\csname lg@edgearc@lg\lg@sourcecorner\endcsname{%
+    \noexpand\lg@limitarc{\expandafter\noexpand\csname lg@radius@\lg@sourcecorner\endcsname}}%
+  \@for\lg@targetcorner:=NW,NE,SW,SE\do{%
+    \edef\lg@definearcs{\noexpand\lg@definearcmode{\lg@sourcecorner}{\lg@targetcorner}}%
+    \lg@definearcs
+  }%
+}
+\def\lg@edgearc@sharp{0pt}
+\def\lg@edgearc@rounded{\kvtcb@arc}
+\def\lg@edgearc#1{%
+  \csname lg@edgearc@\csname tcb@corner@mode@#1\endcsname\endcsname
+}
+% The optical record uses the outer clip radius. Older builders ignore it.
+\def\lg@builtinrounded{rounded}
+\def\lg@opticalcorner#1{%
+  \number\dimexpr\expandafter\ifx\csname tcb@corner@mode@#1\endcsname\lg@builtinrounded
+    \lg@limitarc{\tcb@outer@arc}\else\lg@edgearc{#1}\fi\relax
+}
+\def\lg@writeoptics{%
+  \ifx\lg@renderer\lg@legacyrenderer\else
+    \ifx\lg@opticsprofile\@empty\else
+      \begingroup
+      \let\lg@glintrecord\@empty
+      \ifdefstring{\lg@materialpreset}{reading-window}{%
+        \ifdefstring{\lg@theme}{dark}{%
+          \ifdefstring{\lg@opticsprofile}{reading}{\def\lg@opticsprofile{reading-window-dark}}{}%
+        }{}%
+      }{}%
+      \ifdefstring{\lg@opticsprofile}{reading-lens}{\lg@configureglint}{}%
+      \immediate\write\lg@requests{LGOPT|\lg@fragment|\lg@opticsprofile|\lg@opticalshape|\lg@opticalcorner{NW}|\lg@opticalcorner{NE}|\lg@opticalcorner{SW}|\lg@opticalcorner{SE}\lg@glintrecord}%
+      \endgroup
+    \fi
+  \fi
+}
+\def\lg@configureglint{%
+  \ifdefstring{\lg@rimstyle}{hairline}{\def\lg@glintrecord{|0|0}}{%
+    \ifdefstring{\lg@rimstyle}{classic}{\def\lg@glintrecord{|0|0}}{%
+      \ifdefstring{\lg@rimstyle}{none}{\def\lg@glintrecord{|0|0}}{%
+        \ifx\lg@rimwidth\@empty\def\lg@rimwidth{.70pt}\fi
+        \ifx\lg@rimopacity\@empty
+          \ifdefstring{\lg@theme}{dark}{\def\lg@rimopacity{.27}}{\def\lg@rimopacity{.72}}%
+        \fi
+        \edef\lg@glintrecord{|\number\dimexpr\lg@rimwidth\relax|\lg@rimopacity}%
+  }}}%
+}
+\def\lg@radiusoptions{}
+\newif\iflg@corneroverrides
+\def\lg@radiusdimension#1#2{\lg@setdimension#1{#2}{0pt}{100mm}{lg radius}}
+\def\lg@setside#1#2#3{%
+  \lg@radiusdimension\lg@sidevalue{#3}%
+  \expandafter\let\csname lg@side@#1\endcsname\lg@sidevalue
+  \expandafter\let\csname lg@side@#2\endcsname\lg@sidevalue
+  \lg@corneroverridestrue
+}
+\def\lg@setcorner#1#2{%
+  \expandafter\lg@radiusdimension\csname lg@single@#1\endcsname{#2}%
+  \lg@corneroverridestrue
+}
+\pgfkeys{/lg radius/.cd,
+  default/.code={\lg@radiusdimension\lg@radiusbase{#1}},
+  north/.code={\lg@setside{NW}{NE}{#1}},
+  south/.code={\lg@setside{SW}{SE}{#1}},
+  west/.code={\lg@setside{NW}{SW}{#1}},
+  east/.code={\lg@setside{NE}{SE}{#1}},
+  northwest/.code={\lg@setcorner{NW}{#1}},
+  northeast/.code={\lg@setcorner{NE}{#1}},
+  southwest/.code={\lg@setcorner{SW}{#1}},
+  southeast/.code={\lg@setcorner{SE}{#1}},
+}
+\def\lg@radiuskey#1#2{\pgfqkeys{/lg radius}{#1={#2}}}
+\def\lg@resolvecorner#1{%
+  \edef\lg@resolvedradius{\ifcsvoid{lg@single@#1}{%
+    \ifcsvoid{lg@side@#1}{\lg@radiusbase}{\@nameuse{lg@side@#1}}%
+  }{\@nameuse{lg@single@#1}}}%
+  \expandafter\let\csname lg@radius@#1\endcsname\lg@resolvedradius
+  \ifx\lg@resolvedradius\@empty\else
+    \@namedef{tcb@corner@mode@#1}{lg#1}%
+  \fi
+}
+% One setting resolves all corners: single corner, side, then common radius.
+% 一次解析全部四角，按单角、方位、统一半径的顺序取值。
+\def\lg@setradius#1{%
+  \def\lg@radiusoptions{#1}%
+  \let\lg@radiusbase\@empty
+  \lg@corneroverridesfalse
+  \@for\lg@corner:=NW,NE,SW,SE\do{%
+    \edef\lg@previousmode{\csname tcb@corner@mode@\lg@corner\endcsname}%
+    \edef\lg@custommode{lg\lg@corner}%
+    \ifx\lg@previousmode\lg@custommode
+      \@namedef{tcb@corner@mode@\lg@corner}{rounded}%
+    \fi
+    \cslet{lg@single@\lg@corner}\@empty
+    \cslet{lg@side@\lg@corner}\@empty
+  }%
+  \lg@parseradius{\lg@radiusdimension\lg@radiusbase}{\lg@radiuskey}{#1}%
+  \ifx\lg@radiusbase\@empty\else
+    \tcbset{arc=\lg@radiusbase,outer arc=\lg@radiusbase,rounded corners}%
+  \fi
+  \iflg@corneroverrides
+    \@for\lg@corner:=NW,NE,SW,SE\do{\expandafter\lg@resolvecorner\expandafter{\lg@corner}}%
+  \fi
+}
+\input{\lg@packagedir liquidglass-material.tex}
+\input{\lg@packagedir liquidglass-shadow.tex}
+\tcbset{
+  lg radius/.code={\lg@setradius{#1}},
+  lg edge/.code={\lg@setnumber\lg@edge{#1}{0}{1}{lg edge}},
+  lg edge bottom/.code={\lg@setnumber\lg@edgebottom{#1}{0}{1}{lg edge bottom}},
+  lg edge left/.code={\lg@setnumber\lg@edgeleft{#1}{0}{1}{lg edge left}},
+  lg edge right/.code={\lg@setnumber\lg@edgeright{#1}{0}{1}{lg edge right}},
+  lg edge width/.code={\lg@setdimension\lg@edgewidth{#1}{0pt}{3pt}{lg edge width}},
+  lg edge color/.store in=\lg@edgecolor,
+  lg edge shade color/.store in=\lg@edgeshadecolor,
+  lg rim/.is choice,
+  lg rim/auto/.code={\def\lg@rimstyle{auto}},
+  lg rim/classic/.code={\def\lg@rimstyle{classic}},
+  lg rim/hairline/.code={\def\lg@rimstyle{hairline}},
+  lg rim/none/.code={\def\lg@rimstyle{none}},
+  lg rim width/.code={\lg@setdimension\lg@rimwidth{#1}{0pt}{3pt}{lg rim width}},
+  lg rim opacity/.code={\lg@setnumber\lg@rimopacity{#1}{0}{1}{lg rim opacity}},
+  lg rim color/.store in=\lg@rimcolor,
+  lg luminous/.style={lg blur=2.4,lg opacity=.18,lg grain=.004,lg refraction=.35,lg saturation=.70,lg contrast=7,lg sheen=.55,lg sheen size=.55,lg sheen x=.45,lg sheen y=.30,lg lift=air,lg edge=.35,lg edge bottom=.10,lg edge left=.12,lg edge right=.06,lg edge width=.5pt},
+  lg luminous/.append code={\def\lg@opticsprofile{regular}},
+  liquid glass/.style={enhanced jigsaw,frame hidden,interior hidden,
+    code={\lg@begin},at begin tikz={\lg@paintedfalse\appto\tcb@frame@code{\lg@paint}\iflg@capture\lg@captureclip\fi}},
+  glass tab/.style={attach boxed title to top left={xshift=7mm,yshift=-2.2mm},
+    boxed title style={enhanced,arc=3mm,boxrule=.35pt,colframe=white,
+      colback=LGPaper,opacityback=.72,interior style={top color=white,bottom color=cyan!10!white},coltext=LGInk,left=4mm,right=4mm,top=1mm,bottom=1mm},
+    fonttitle=\bfseries,before title app={\color{LGInk}}}
+}
+\newtcolorbox{glassbox}[1][]{breakable,arc=4mm,auto outer arc,boxrule=.4pt,
+  left=6mm,right=6mm,top=6mm,bottom=5mm,before skip=5mm,after skip=5mm,
+  fonttitle=\bfseries,liquid glass,#1}
+\input{\lg@packagedir liquidglass-theorems.tex}
+\endinput

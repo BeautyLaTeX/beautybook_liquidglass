@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{SOURCE}}; script-src 'nonce-{{NONCE}}'; img-src {{SOURCE}} data:">
+  <link rel="stylesheet" href="{{CSS}}">
+  <link rel="stylesheet" href="{{FONT_CSS}}">
+  <title>LiquidGlass LaTeX Studio</title>
+</head>
+<body data-initial-font-scale="{{FONT_SCALE}}">
+  <header class="mast">
+    <div class="identity">
+      <img class="mark" src="{{ICON}}" alt="">
+      <div><p class="app-name">LiquidGlass LaTeX Studio</p><h1>设计工作台</h1></div>
+    </div>
+    <nav aria-label="工作台操作">
+      <label class="font-scale">字号 <select data-font-scale aria-label="窗口字号"></select></label>
+      <button data-action="load" class="quiet">载入选区</button>
+      <button id="verify" class="primary" disabled>▶ <span>TeX 验证</span></button>
+    </nav>
+  </header>
+  <div class="document-bar">
+    <div class="document"><button id="file" data-action="reveal" title="定位编辑器选区">Material study</button><span id="location">工作台样片</span><span id="dirty" hidden>草稿</span></div>
+    <div class="document-tools">
+      <span id="engine" class="mono">XeLaTeX</span>
+      <button id="compile-all" type="button" disabled>编译整篇</button>
+      <button id="build-pdf" type="button" data-action="buildPdf" hidden>文档 PDF</button>
+    </div>
+  </div>
+  <div id="build-strip" class="build-strip" hidden>
+    <progress id="build-progress" max="100" value="0" aria-label="全文编译进度"></progress>
+    <span id="build-caption" role="status"></span>
+    <button type="button" data-action="output">日志</button>
+  </div>
+  <main>
+    <div class="desk">
+      <div class="toolbar">
+        <div class="switcher" role="group" aria-label="显示方式">
+          <button data-mode="live" aria-pressed="true">即时画布</button>
+          <button data-mode="native" aria-pressed="false">TeX 成品</button>
+          <button data-mode="compare" aria-pressed="false">并排对照</button>
+        </div>
+        <div class="canvas-tools">
+          <button data-action="sample" class="subtle">样片</button>
+          <div class="zoombar" role="group" aria-label="预览缩放">
+            <button id="zoom-out" aria-label="缩小">−</button>
+            <button id="zoom-level" aria-label="重置缩放">100%</button>
+            <button id="zoom-in" aria-label="放大">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="views" id="views">
+        <section id="live" class="viewport live" aria-label="即时近似画布">
+          <div class="plate-head"><span class="signal"></span><h2>即时材质</h2><span id="backdrop">工作台底图</span></div>
+          <div class="stage" id="stage">
+            <div class="stage-art" id="stage-art">
+              <canvas id="material" width="640" height="368" data-scene="{{SCENE}}" aria-hidden="true"></canvas>
+              <div id="specimen" class="specimen"><div id="preview-title"></div><p id="preview-body"></p></div>
+            </div>
+            <div id="drawing" class="drawing" hidden></div>
+            <p id="live-empty" class="empty" hidden>此选区可使用 TeX 验证预览。</p>
+          </div>
+          <div class="viewport-footer"><span id="fidelity">实时近似</span></div>
+        </section>
+        <section id="native" class="viewport native" aria-label="TeX 真实编译预览" hidden>
+          <div class="plate-head"><span class="signal teal"></span><h2>原生排版</h2><span>PDF</span></div>
+          <div class="paper" id="paper">
+            <img id="result" alt="TeX 编译结果" hidden>
+            <div class="native-feedback" id="feedback">
+              <strong id="native-title">验证当前草稿</strong>
+              <p id="native-detail">按下「TeX 验证」后，结果会显示在这里。</p>
+              <button id="log" data-action="output" hidden>查看日志</button>
+            </div>
+          </div>
+          <div class="viewport-footer native-footer">
+            <span id="native-tag">真实 TeX</span>
+            <div id="page-tools" hidden>
+              <button id="previous" aria-label="上一页">‹</button><span id="page-number"></span><button id="next" aria-label="下一页">›</button>
+              <button data-action="pdf">打开 PDF</button>
+            </div>
+          </div>
+        </section>
+      </div>
+      <section class="source-pane" aria-labelledby="source-label">
+        <div class="section-top"><h2 id="source-label">LaTeX 草稿</h2><span id="source-lines"></span><button data-action="copy">复制</button></div>
+        <div class="editor"><textarea id="code" aria-labelledby="source-label" spellcheck="false" maxlength="100000" wrap="off"></textarea></div>
+      </section>
+    </div>
+    <aside aria-labelledby="inspector-title">
+      <div class="section-top"><div><h2 id="inspector-title">Material Lab</h2><span class="eyebrow" id="kind">透光材质</span></div><button id="reset" class="subtle">重置</button></div>
+      <div id="presets" class="presets" aria-label="材质预设">
+        <button data-preset="clear" aria-pressed="false"><i></i>清透</button>
+        <button data-preset="frosted" aria-pressed="false"><i></i>磨砂</button>
+        <button data-preset="luminous" aria-pressed="false"><i></i>柔光</button>
+      </div>
+      <div id="properties"></div>
+      <p id="property-help" class="muted" hidden></p>
+      <div class="apply"><button id="apply" class="primary" disabled>应用到选区</button><p id="apply-help" class="muted">样片参数可复制到 LaTeX。</p></div>
+    </aside>
+  </main>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <script nonce="{{NONCE}}" src="{{SOURCEJS}}"></script>
+  <script nonce="{{NONCE}}" src="{{OPTICS}}"></script>
+  <script nonce="{{NONCE}}" src="{{FONT_JS}}"></script>
+  <script nonce="{{NONCE}}" src="{{JS}}"></script>
+</body>
+</html>

@@ -21,7 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('document', nargs='?', help='A .tex filename, or its menu number')
     parser.add_argument('--all', action='store_true', help='Build all listed books except the short demo')
-    parser.add_argument('--dpi', type=int, default=144)
+    parser.add_argument('--dpi', type=int, help='Override the LiquidGlass material resolution')
     parser.add_argument('--no-open', action='store_true', help='Build without opening the PDF viewer')
     args = parser.parse_args()
     if args.all:
@@ -41,8 +41,9 @@ def main():
     failed = []
     for document in chosen:
         command = [sys.executable, str(ROOT / 'lgbuild.py'), document,
-                   '--dpi', str(args.dpi),
                    '--bibliography', 'auto', '--index', 'auto']
+        if args.dpi is not None:
+            command.extend(['--dpi', str(args.dpi)])
         print(f'\n正在构建：{document}\n', flush=True)
         result = subprocess.run(command, cwd=ROOT)
         if result.returncode:
